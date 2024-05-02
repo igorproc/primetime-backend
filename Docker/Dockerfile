@@ -29,7 +29,7 @@ RUN npm ci
 
 COPY .. .
 
-RUN /bin/sh -c "./Docker/scripts/${ENVIRONMENT_NAME}.sh"
+RUN /bin/sh -c "find ./Docker/scripts/ -type f -exec chmod +x {} \; && ./Docker/scripts/${ENVIRONMENT_NAME}.sh"
 
 EXPOSE 3000
 
