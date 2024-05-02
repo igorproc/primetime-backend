@@ -15,6 +15,7 @@ const jestConfig: Config.InitialOptions = {
   transform: {
     "^.+\\.ts$": "ts-jest"
   },
+  passWithNoTests: true,
   // Aliases
   moduleNameMapper: pathsToModuleNameMapper(
     paths,
