@@ -23,7 +23,7 @@ COPY --from=prepare-stage /app /app
 
 WORKDIR /app
 
-RUN /bin/sh -c "cp ./config/environments/.env.${ENVIRONMENT_NAME} .env"
+RUN /bin/sh -c "cp ./config/environments/.${ENVIRONMENT_NAME}.env .env"
 
 RUN npm ci
 
@@ -35,4 +35,4 @@ EXPOSE 3000
 
 SHELL ["bash", "-c"]
 
-CMD npm run deploy:${ENVIRONMENT_NAME}
+CMD npm run start:${ENVIRONMENT_NAME}

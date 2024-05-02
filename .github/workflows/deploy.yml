@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - dev
+      - stage
       - main
 
 env:
@@ -13,7 +14,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     environment:
-      name: ${{ (github.ref == 'refs/heads/dev' && 'Development') || (github.ref == 'refs/heads/main' && 'Production') }}
+      name: ${{ (github.ref == 'refs/heads/dev' && 'Development') || (github.ref == 'refs/heads/stage' && 'Staging') || (github.ref == 'refs/heads/main' && 'Production') }}
 
     steps:
       - name: Checkout code
@@ -30,23 +31,27 @@ jobs:
         id: set-env
         run: |
           if [ "${{ github.ref }}" == "refs/heads/dev" ]; then
-            echo "::set-output name=PORT::3210"
+            echo "::set-output name=PORT::3702"
             echo "::set-output name=ENVIRONMENT_NAME::dev"
             echo "::set-output name=BRANCH_NAME::dev"
+          elif [ "${{ github.ref }}" == "refs/heads/stage" ]; then
+            echo "::set-output name=PORT::3701"
+            echo "::set-output name=ENVIRONMENT_NAME::stage"
+          echo "::set-output name=BRANCH_NAME::stage"
           elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            echo "::set-output name=PORT::3211"
+            echo "::set-output name=PORT::3700"
             echo "::set-output name=ENVIRONMENT_NAME::production"
             echo "::set-output name=BRANCH_NAME::main"
           fi
 
       - name: Deploy to server
         run: |
-          scp -r ./* ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }}:/home/projects/primetime-backend-${{ steps.set-env.outputs.ENVIRONMENT_NAME }}
+          scp -r ./* ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }}:/home/projects/nuxt-core-template-${{ steps.set-env.outputs.ENVIRONMENT_NAME }}
           ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} "\
           export BRANCH_NAME=${{ steps.set-env.outputs.BRANCH_NAME }} \
           PORT=${{ steps.set-env.outputs.PORT }} \
           ENVIRONMENT_NAME=${{ steps.set-env.outputs.ENVIRONMENT_NAME }} && \
-          cd /home/projects/primetime-backend-${{ steps.set-env.outputs.ENVIRONMENT_NAME }} && \
+          cd /home/projects/nuxt-core-template-${{ steps.set-env.outputs.ENVIRONMENT_NAME }} && \
           docker-compose down && \
           docker-compose build --no-cache && \
           docker-compose up -d --force-recreate"
@@ -54,4 +59,4 @@ jobs:
         env:
           PORT: ${{ steps.set-env.outputs.PORT }}
           ENVIRONMENT_NAME: ${{ steps.set-env.outputs.ENVIRONMENT_NAME }}
-          BRANCH_NAME: ${{ steps.set-env.outputs.BRANCH_NAME }}\
+          BRANCH_NAME: ${{ steps.set-env.outputs.BRANCH_NAME }}
