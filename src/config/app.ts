@@ -1,7 +1,7 @@
 // Node Deps
 import { ValidationPipe, type INestApplication } from '@nestjs/common'
 import { env } from 'process'
-import cookieParser from 'cookie-parser'
+import * as cookieParser from 'cookie-parser'
 // Config
 import Cors from '@/config/cors'
 import Swagger from '@/config/swagger'
