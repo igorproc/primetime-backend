@@ -1,0 +1,31 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource data {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// Users Models
+model Application {
+  app_id            Int                 @id @default(autoincrement())
+  title             String              @unique() @data.VarChar(64)
+  is_verified       Boolean             @default(true)
+  owner_uid         Int
+  secure_key        String              @unique() @data.VarChar(256)
+  access_key        String              @data.VarChar(256)
+  status            applications_status @default(disabled)
+  access_permission String              @data.VarChar(512)
+  domain            String              @unique() @data.VarChar(64)
+  redirect_uri      String              @data.VarChar(64)
+  created_at        Int
+
+  @@index([owner_uid], map: "owner_uid")
+  @@map("applications")
+}
+
+enum applications_status {
+  enabled
+  disabled
+}
