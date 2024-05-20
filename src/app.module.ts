@@ -6,6 +6,7 @@ import Telegram from '@/config/telegram'
 import Schedule from '@/config/schedule'
 // Other Modules
 import { DbModule } from '@/db/db.module'
+import { AuthModule } from '@/auth/auth.module'
 
 const EnvModule = Env()
 const TelegramModule = Telegram()
@@ -17,6 +18,7 @@ const ScheduleModule = Schedule()
     TelegramModule,
     ScheduleModule,
     DbModule,
+    AuthModule,
   ],
 })
 
