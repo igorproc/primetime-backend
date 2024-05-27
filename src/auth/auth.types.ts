@@ -1,14 +1,17 @@
-import { TelegramAuthInput } from '@/auth/telegram/dto/validate.dto'
-import { VkAuthInput } from '@/auth/vk/dto/validator.dto'
+// Types & Interfaces
+import type { TelegramAuthInput } from '@/auth/telegram/dto/validate.dto'
 
 export enum EAuthWays {
   'telegram' = 'TG',
-  'vkontakte' = 'VK',
 }
 
 // to extends auth input
-export type TAuthInput = (TelegramAuthInput | VkAuthInput)
+export type TAuthInput = (TelegramAuthInput)
 
-export interface IAuthServiceProvider<T1, P1> {
-  authUser: (payload: T1) => Promise<P1>
+type TAuthUserResponse = {
+  id: number
+}
+
+export interface IAuthServiceProvider {
+  authUser: (...args: unknown[]) => Promise<TAuthUserResponse>
 }

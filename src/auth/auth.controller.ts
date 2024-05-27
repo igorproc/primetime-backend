@@ -1,11 +1,14 @@
 // Node Deps
 import { Body, Controller, Post } from '@nestjs/common'
+import { ApiBody, ApiOperation, ApiTags, ApiResponse } from '@nestjs/swagger'
 // Current Module Deps
 import { AuthService } from './auth.service'
-// Types & Interfaces
-import type { TAuthInput } from '@/auth/auth.types'
-import { EAuthWays } from '@/auth/auth.types'
+// Validators
+import { AuthInputSchema } from '@/auth/dto/validate.dto'
+// Swagger Schemas
+import { SuccessAuthSchema } from '@/auth/dto/swagger.dto'
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -13,10 +16,15 @@ export class AuthController {
   ) {}
 
   @Post('login')
+  @ApiOperation({ description: 'User login by others services' })
+  @ApiResponse({
+    status: 200,
+    type: SuccessAuthSchema,
+  })
+  @ApiBody({ type: AuthInputSchema, required: true })
   async login(
-    @Body('type') type: keyof typeof EAuthWays,
-    @Body('payload') loginData: TAuthInput,
+    @Body() data: AuthInputSchema,
   ) {
-    return await this.authService.auth(type, loginData)
+    return await this.authService.auth(data.type, data.payload)
   }
 }

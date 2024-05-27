@@ -1,12 +1,16 @@
-import { Module } from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { AuthController } from './auth.controller';
-import { TelegramModule } from './telegram/telegram.module';
-import { VkModule } from './vk/vk.module';
+// Node Deps
+import { Module } from '@nestjs/common'
+// Other Modules
+import { DbModule } from '@/db/db.module'
+// Child Modules
+import { TelegramModule } from './telegram/telegram.module'
+// Current Module Deps
+import { AuthService } from './auth.service'
+import { AuthController } from './auth.controller'
 
 @Module({
+  imports: [TelegramModule, DbModule],
   providers: [AuthService],
   controllers: [AuthController],
-  imports: [TelegramModule, VkModule]
 })
 export class AuthModule {}
