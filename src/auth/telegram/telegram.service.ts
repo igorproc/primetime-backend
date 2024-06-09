@@ -7,16 +7,16 @@ import { DbService } from '@/db/db.service'
 import { TelegramErrors } from '@/auth/telegram/telegram.errors'
 // Utils
 import { cryptStringToSha256, cryptStringToSha256ByKey } from '@utils/crypt'
-import { getCurrentTime } from '@utils/time'
+import { getCurrentDate, getCurrentTimestamp } from '@utils/time'
 // Constants
-import { MAX_PAYLOAD_LIFE } from '@/auth/telegram/telegram.const'
+import { MAX_PAYLOAD_LIFE } from '@/global.const'
 // Types & Interfaces
-import type { userTelegramData } from '@prisma/client'
+import { type user, user_roles } from '@prisma/client'
 import type { IAuthServiceProvider } from '@/auth/auth.types'
 import type { TelegramAuthInput } from '@/auth/telegram/dto/validate.dto'
 import { ETelegramHmacTokenFields } from '@/auth/telegram/telegram.types'
 
-type TTelegramDataCreate = Omit<userTelegramData, 'id' | 'createdAt' | 'updatedAt'>
+type TTelegramDataCreate = Omit<user, 'createdAt' | 'updatedAt'>
 @Injectable()
 export class TelegramService implements IAuthServiceProvider {
   constructor(
@@ -37,36 +37,34 @@ export class TelegramService implements IAuthServiceProvider {
     return dataHmac === hash
   }
 
-  async authUser(data: TelegramAuthInput, userId: number) {
+  public async authUser(data: TelegramAuthInput) {
     const dataIsValid = this.validateTelegramData(data)
-    const currentTime = getCurrentTime()
-    const dataIsExpired = currentTime - data.authDate > MAX_PAYLOAD_LIFE
-    console.log(dataIsExpired, currentTime, data.authDate)
+    const currentTimestamp = getCurrentTimestamp()
+    const dataIsExpired = currentTimestamp - data.authDate > MAX_PAYLOAD_LIFE
 
     if (!dataIsValid) {
       throw new HttpException(
         TelegramErrors.BAD_PAYLOAD,
-        HttpStatus.BAD_GATEWAY,
+        HttpStatus.NOT_ACCEPTABLE,
       )
     }
     if (dataIsExpired) {
       throw new HttpException(
         TelegramErrors.DATA_EXPIRED,
-        HttpStatus.GATEWAY_TIMEOUT,
+        HttpStatus.FORBIDDEN,
       )
     }
 
     const telegramDataSourceForCreate: TTelegramDataCreate = {
-      userId,
-      telegramId: data.id,
+      id: data.id,
       firstName: data.firstName,
       username: data.username,
       photoUrl: data.photoUrl,
+      role: user_roles.USER_VERIFY,
+      lastVisited: getCurrentDate(),
     }
-    const telegramData = await this.db
-      .userTelegramData
+    return this.db
+      .user
       .create({ data: telegramDataSourceForCreate })
-
-    return { id: telegramData.id }
   }
 }

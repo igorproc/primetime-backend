@@ -29,13 +29,14 @@ model device {
   id        Int              @id @default(autoincrement()) @map("id")
   clientId  String           @unique @default(uuid()) @map("client_id")
   platform  device_platforms @map("platform")
-  ip        String           @map("ip") @data.VarChar(13)
+  ip        String           @map("ip") @data.VarChar(15)
   userId    Int?             @map("user_id")
   createdAt DateTime         @default(now()) @map("created_at")
-  updatedAt DateTime         @default(now()) @map("updated_at")
+  updatedAt DateTime         @default(now()) @updatedAt @map("updated_at")
 
   // Relations
-  user user? @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Restrict)
+  user  user?   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Restrict)
+  token token[]
 
   @@index([userId])
   @@map("devices")
@@ -43,39 +44,37 @@ model device {
 
 // Users Models
 model user {
-  id               Int                @id @default(autoincrement()) @map("id")
-  role             user_roles         @default(USER_DEFAULT) @map("role")
-  username         String             @unique() @default(uuid()) @map("login") @data.VarChar(64)
-  name             String             @map("name") @data.VarChar(32)
-  surname          String             @map("surname") @data.VarChar(32)
-  email            String             @unique() @map("email") @data.VarChar(64)
-  password         String             @map("password") @data.VarChar(512)
-  isVerified       Boolean            @default(false) @map("is_verified")
-  lastVisited      DateTime           @default(now()) @map("last_visited")
-  createdAt        DateTime           @default(now()) @map("created_at")
-  updatedAt        DateTime           @default(now()) @map("updated_at")
-  // Relations
-  userTelegramData userTelegramData[]
-  device           device[]
+  id          Int        @id @map("id")
+  role        user_roles @default(USER_DEFAULT) @map("role")
+  firstName   String     @map("first_name") @data.VarChar(64)
+  username    String     @unique() @default(uuid()) @map("login") @data.VarChar(64)
+  photoUrl    String     @unique() @map("photo_url")
+  lastVisited DateTime   @default(now()) @map("last_visited")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @default(now()) @updatedAt @map("updated_at")
+  device      device[]
+  token       token[]
 
   @@map("users")
 }
 
-model userTelegramData {
-  id         Int      @id @default(autoincrement()) @map("id")
-  userId     Int      @unique
-  telegramId Int      @unique @map("telegram_id") @data.UnsignedInt
-  firstName  String   @map("first_name") @data.VarChar(64)
-  username   String   @map("username") @data.VarChar(64)
-  photoUrl   String   @map("photo_url") @data.VarChar(256)
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @default(now()) @map("updated_at")
+model token {
+  id           Int      @id @default(autoincrement()) @map("id")
+  userId       Int      @map("user_id")
+  clientId     String   @map("client_id")
+  accessToken  String   @map("access_token") @data.VarChar(1024)
+  refreshToken String   @map("refresh_token") @data.VarChar(256)
+  expiresAt    DateTime @map("expires_at")
+  revoked      Boolean  @default(false) @map("is_revoked") @data.TinyInt
+  createdAt    DateTime @default(now()) @map("created_at")
 
   // Relations
-  user user @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Restrict)
+  user   user   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  device device @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
 
-  @@index([userId], map: "user_id_for_telegram_index")
-  @@map("users_telegram_data")
+  // Index
+  @@index([refreshToken])
+  @@map("tokens")
 }
 
 enum applications_status {

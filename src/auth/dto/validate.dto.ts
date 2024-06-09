@@ -1,6 +1,6 @@
 // Node Deps
 import { ApiProperty } from '@nestjs/swagger'
-import { IsEnum, IsNumber, ValidateNested } from 'class-validator'
+import { IsEnum, IsJWT, IsNumber, IsUUID, ValidateNested } from 'class-validator'
 import { Type } from 'class-transformer'
 // Other Validators
 import { TelegramAuthInput, TelegramAuthInputSchema } from '@/auth/telegram/dto/validate.dto'
@@ -22,8 +22,18 @@ export class AuthInputSchema {
   type: keyof typeof EAuthWays
 
   @ApiProperty({
+    name: 'clientId',
+    type: String,
+    required: true,
+    example: 'f97eeecf-b553-4cad-a1af-9eb522965893',
+  })
+  @IsUUID()
+  clientId: string
+
+  @ApiProperty({
     name: 'payload',
     required: true,
+    type: TelegramAuthInputSchema,
   })
   @ValidateNested()
   @Type(() => TelegramAuthInputSchema)
@@ -52,3 +62,31 @@ export class AuthInputTypeSchema {
 }
 
 export type AuthTypeInput = typeof AuthInputTypeSchema
+
+export class RevokeInputSchema {
+  @ApiProperty({
+    name: 'token',
+    type: String,
+    minimum: 128,
+    maximum: 1024,
+    required: true,
+  })
+  @IsJWT()
+  token: string
+}
+
+export type TRevokeInput = typeof RevokeInputSchema
+
+export class LogoutInputSchema {
+  @ApiProperty({
+    name: 'token',
+    type: String,
+    minimum: 128,
+    maximum: 1024,
+    required: true,
+  })
+  @IsJWT()
+  token: string
+}
+
+export type TLogoutInput = typeof LogoutInputSchema

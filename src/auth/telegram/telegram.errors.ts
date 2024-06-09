@@ -1,4 +1,4 @@
 export const TelegramErrors = {
-  BAD_PAYLOAD: { error: 1000, message: 'Невалидные данные' },
-  DATA_EXPIRED: { error: 1001, message: 'Данные устарели' },
+  BAD_PAYLOAD: { code: 'AT406', message: 'Невалидные данные' },
+  DATA_EXPIRED: { code: 'AT403', message: 'Данные устарели' },
 }

@@ -7,21 +7,24 @@ import Schedule from '@/config/schedule'
 // Other Modules
 import { DbModule } from '@/db/db.module'
 import { AuthModule } from '@/auth/auth.module'
-import { UserModule } from './user/user.module';
+import { UserModule } from '@/user/user.module'
+import { DeviceModule } from './device/device.module'
 
-const EnvModule = Env()
-const TelegramModule = Telegram()
-const ScheduleModule = Schedule()
+const EnvConfigModule = Env()
+const TelegramConfigModule = Telegram()
+const ScheduleConfigModule = Schedule()
 
 @Module({
   imports: [
-    EnvModule,
-    TelegramModule,
-    ScheduleModule,
+    EnvConfigModule,
+    ScheduleConfigModule,
     DbModule,
     AuthModule,
     UserModule,
-  ],
+    TelegramConfigModule,
+    DeviceModule
+  ]
 })
 
-export class AppModule {}
+export class AppModule {
+}

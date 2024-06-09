@@ -1,16 +1,37 @@
 // Node Deps
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
-import { faker } from '@faker-js/faker'
 // Other Services
-import { TelegramService } from '@/auth/telegram/telegram.service'
 import { DbService } from '@/db/db.service'
+import { JwtService } from '@nestjs/jwt'
+import { DeviceService } from '@/device/device.service'
+import { UserService } from '@/user/user.service'
+import { TelegramService } from '@/auth/telegram/telegram.service'
+// Utils
+import { addTimeToCurrentDate, getCurrentDate } from '@utils/time'
+import { cryptStringToSha256 } from '@utils/crypt'
+import { isValidUUID } from '@utils/validate'
+// Errors
+import { AuthErrors } from '@/auth/auth.errors'
 // Types & Interfaces
 import { EAuthWays, IAuthServiceProvider, type TAuthInput } from '@/auth/auth.types'
-import { encryptWithoutSalt } from '@utils/crypt'
-import { TIMES } from '@/global.const'
+import { SuccessAuthSchema, SuccessAuthUser } from '@/auth/dto/swagger.dto'
+import { EUserRoles } from '@/global.types'
+import { checkErrorIsResponseError } from '@utils/error'
 
+// Expand if add new auth service
 type TAvailableServices = TelegramService
 type TServiceAdapter = { [key in EAuthWays]: TAvailableServices }
+
+export type TAuthTokensPair = {
+  accessToken: string,
+  refreshToken: string,
+}
+
+type TAccessTokenPayload = {
+  id: number,
+  clientId: string,
+  role: EUserRoles
+}
 
 @Injectable()
 export class AuthService {
@@ -18,6 +39,9 @@ export class AuthService {
 
   constructor(
     private readonly db: DbService,
+    private readonly jwtService: JwtService,
+    private readonly deviceService: DeviceService,
+    private readonly userService: UserService,
     private readonly telegramAuthService: TelegramService
   ) {
     this.serviceAdapterByType = {
@@ -25,7 +49,38 @@ export class AuthService {
     }
   }
 
-  private fallBackClassExemplar: IAuthServiceProvider & { httpException: unknown } = {
+  private async validateToken(tokenType: 'access' | 'refresh', token: string): Promise<boolean> {
+    try {
+      const queryPayload: { accessToken?: string, refreshToken?: string } = {}
+      switch (tokenType) {
+        case 'access':
+          queryPayload.accessToken = token
+          break
+        case 'refresh':
+          queryPayload.refreshToken = token
+          break
+        default:
+          queryPayload.accessToken = null
+          queryPayload.refreshToken = null
+          break
+      }
+
+      await this.db.token.findFirstOrThrow({ where: queryPayload })
+      return !!this.jwtService.verify(token)
+    } catch {
+      throw new HttpException(
+        AuthErrors.BAD_JWT,
+        HttpStatus.NOT_ACCEPTABLE
+      )
+    }
+  }
+
+  private async decodeJWT<T>(tokenType: 'access' | 'refresh', token: string): Promise<T> {
+    await this.validateToken(tokenType, token)
+    return this.jwtService.decode(token)
+  }
+
+  protected fallBackClassExemplar: IAuthServiceProvider & { httpException: unknown } = {
     httpException: new HttpException({ error: 501 }, HttpStatus.BAD_REQUEST),
 
     async authUser() {
@@ -39,45 +94,136 @@ export class AuthService {
     return this.serviceAdapterByType[valueFromEnum] || this.fallBackClassExemplar
   }
 
-  protected async deleteUserIfIsNotVerified(userId: number) {
+  protected async deleteTokensByRefreshToken(refreshToken: string) {
     return this.db
-      .user
-      .delete({
-        where: {
-          id: userId,
-          isVerified: false,
-        },
+      .token
+      .deleteMany({
+        where: { refreshToken }
       })
   }
 
-  protected async createMockUser() {
-    const fakeMail = faker.internet.email({ allowSpecialCharacters: true })
-    const fakePassword = faker.internet.password({ length: 15, prefix: 'Temp' })
-
+  protected async deleteTokensByIds(userId: number, clientId: string) {
     return this.db
-      .user
+      .token
+      .deleteMany({
+        where: { userId, clientId }
+      })
+  }
+
+  public async createTokens(data: SuccessAuthUser, clientId: string): Promise<TAuthTokensPair> {
+    if (!isValidUUID(clientId)) {
+      throw new HttpException(
+        AuthErrors.NO_CLIENT_ID,
+        HttpStatus.NOT_ACCEPTABLE
+      )
+    }
+    if (!await this.deviceService.getByUUID(clientId)) {
+      throw new HttpException(
+        AuthErrors.BAD_CLIENT_ID,
+        HttpStatus.FORBIDDEN
+      )
+    }
+
+    await this.deleteTokensByIds(data.id, clientId)
+    const refreshTokenExpiresDate = addTimeToCurrentDate(180, 'days').getTime() / 1000
+    const accessTokenCode = refreshTokenExpiresDate + Math.random().toString(32)
+
+    const accessToken = this.jwtService.sign(
+      { expires: cryptStringToSha256(accessTokenCode), role: data.role },
+      { expiresIn: '15m' }
+    )
+    const refreshToken = this.jwtService.sign(
+      { id: data.id, clientId: clientId, role: data.role },
+      { expiresIn: '180d' }
+    )
+
+    const tokens = this.db
+      .token
       .create({
         data: {
-          username: faker.internet.userName(),
-          name: faker.person.firstName(),
-          surname: faker.person.lastName(),
-          email: fakeMail,
-          password: encryptWithoutSalt(fakePassword),
-          role: 'NONE',
+          accessToken,
+          refreshToken,
+          expiresAt: addTimeToCurrentDate(6, 'months'),
+          userId: data.id,
+          clientId
         },
+        select: {
+          accessToken: true,
+          refreshToken: true
+        }
       })
+
+    if (!tokens) {
+      throw new HttpException(
+        AuthErrors.INTERNAL_ERROR,
+        HttpStatus.INTERNAL_SERVER_ERROR
+      )
+    }
+    await this.deviceService.setUserIdByClientId(data.id, clientId)
+    return tokens
   }
 
-  async auth(type: keyof typeof EAuthWays, data: TAuthInput) {
-    const userData = await this.createMockUser()
+  public async auth(clientId: string, type: keyof typeof EAuthWays, data: TAuthInput): Promise<SuccessAuthSchema> {
+    let userData = await this.userService.getUserById(data.id)
+    if (userData) {
+      const tokens = await this.createTokens(userData, clientId)
+      return { user: userData, tokens }
+    }
 
-    const userTimeout = setTimeout(async () => {
-      await this.deleteUserIfIsNotVerified(userData.id)
-      clearTimeout(userTimeout)
-    }, TIMES.halfHour)
-
-    return await this
+    userData = await this
       .getCurrentServiceByType(type)
-      .authUser(data, userData.id)
+      .authUser(data)
+    const tokens = await this.createTokens(userData, clientId)
+    return { user: userData, tokens }
+  }
+
+  public async revokeTokens(refreshToken: string): Promise<TAuthTokensPair> {
+    const currentDate = getCurrentDate()
+    const jwtDecode = await this.decodeJWT<TAccessTokenPayload>(
+      'refresh',
+      refreshToken
+    )
+
+    const tokensData = await this.db
+      .token
+      .findFirst({
+        where: { refreshToken: refreshToken }
+      })
+    const tokenIsExpired = tokensData.expiresAt.getTime() - currentDate.getTime() < 0
+    if (tokensData.revoked || tokenIsExpired) {
+      this.deleteTokensByRefreshToken(refreshToken)
+      throw new HttpException(
+        AuthErrors.LOGOUT,
+        HttpStatus.UNAUTHORIZED
+      )
+    }
+
+    const userData = await this.db.user.findUnique({
+      where: { id: jwtDecode.id }
+    })
+    return await this.createTokens(userData, jwtDecode.clientId)
+  }
+
+  public async logout(refreshToken: string) {
+    try {
+      const jwtData: TAccessTokenPayload = await this.decodeJWT('refresh', refreshToken)
+      await this.db.device.updateMany({
+        where: { userId: jwtData.id },
+        data: { userId: null }
+      })
+      await this.db.token.deleteMany({
+        where: { refreshToken }
+      })
+
+      return { successLogout: true }
+    } catch (error) {
+      if (checkErrorIsResponseError(error.message)) {
+        throw error
+      }
+      throw new HttpException(
+        AuthErrors.INTERNAL_ERROR,
+        HttpStatus.INTERNAL_SERVER_ERROR
+      )
+    }
   }
 }

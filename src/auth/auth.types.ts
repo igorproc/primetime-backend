@@ -1,5 +1,6 @@
 // Types & Interfaces
 import type { TelegramAuthInput } from '@/auth/telegram/dto/validate.dto'
+import type { user as TUserModel } from '@prisma/client'
 
 export enum EAuthWays {
   'telegram' = 'TG',
@@ -7,11 +8,8 @@ export enum EAuthWays {
 
 // to extends auth input
 export type TAuthInput = (TelegramAuthInput)
-
-type TAuthUserResponse = {
-  id: number
-}
+type TSuccessAuth = Omit<TUserModel, 'createdAt' | 'updatedAt'>
 
 export interface IAuthServiceProvider {
-  authUser: (...args: unknown[]) => Promise<TAuthUserResponse>
+  authUser: (...args: unknown[]) => Promise<TSuccessAuth>
 }

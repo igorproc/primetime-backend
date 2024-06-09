@@ -6,7 +6,8 @@ import { HttpException } from '@nestjs/common'
 import { TelegramErrors } from '@/auth/telegram/telegram.errors'
 import { DbModule } from '@/db/db.module'
 // Utils
-// @ts-ignore
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
 import { getDataFromJson } from '@@/test/utis/data.util'
 // Types & Interfaces
 import type { TelegramAuthInput } from '@/auth/telegram/dto/validate.dto'
@@ -17,7 +18,7 @@ type JSONData = {
   hashBadPayload: TelegramAuthInput,
 }
 
-describe('Telegram Auth Service', () => {
+describe('[Telegram] Main Service', () => {
   const data = getDataFromJson<JSONData>('telegram.json')
   let service: TelegramService
 
@@ -34,9 +35,9 @@ describe('Telegram Auth Service', () => {
     expect(service).toBeDefined()
   })
 
-  it('check telegram hash function by bad payload', async () => {
+  it('check hash function by bad payload', async () => {
     try {
-      await service.authUser(data.hashBadPayload, 1)
+      await service.authUser(data.hashBadPayload)
       expect(true).toBe(false)
     } catch (error) {
       expect(error).toBeInstanceOf(HttpException)
@@ -44,9 +45,9 @@ describe('Telegram Auth Service', () => {
     }
   })
 
-  it('check telegram hash function by bad auth date',async () => {
+  it('check hash function by expired data', async () => {
     try {
-      await service.authUser(data.hashCheck, 1)
+      await service.authUser(data.hashCheck)
       expect(true).toBe(false)
     } catch (error) {
       expect(error).toBeInstanceOf(HttpException)
