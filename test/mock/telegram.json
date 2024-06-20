@@ -1,0 +1,18 @@
+{
+  "hashCheck": {
+    "id": 369722545,
+    "firstName": "Pr0s1k",
+    "username": "pr0s1k",
+    "photoUrl": "https://t.me/i/userpic/320/-n2lCDE6m96YkJeujGcQSsWaKQfn6Y_J_5dLqCbQbuA.jpg",
+    "authDate": 1716818989,
+    "hash": "82bcd3d01f44a2fc34cd1bcfc6e7bb6f6ba188427b3a8b82b666d0c86859b96f"
+  },
+  "hashBadPayload": {
+    "id": 123123,
+    "firstName": "moda",
+    "username": "quwazy",
+    "photoUrl": "https://t.me/i/userpic/320/-n2lCDE6m96YkJeujGcQSsWaKQfn6Y_J_5dLqCbQbuA.jpg",
+    "authDate": 1215811989,
+    "hash": "82bcd3d01f44a2fc34cd1bcfc6e7qb6f6ca187427b3a8b82b666d0c86859b96f"
+  }
+}

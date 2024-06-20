@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - dev
-      - stage
       - main
 
 env:
@@ -31,15 +30,15 @@ jobs:
         id: set-env
         run: |
           if [ "${{ github.ref }}" == "refs/heads/dev" ]; then
-            echo "::set-output name=PORT::3702"
+            echo "::set-output name=PORT::3803"
             echo "::set-output name=ENVIRONMENT_NAME::dev"
             echo "::set-output name=BRANCH_NAME::dev"
           elif [ "${{ github.ref }}" == "refs/heads/stage" ]; then
-            echo "::set-output name=PORT::3701"
+            echo "::set-output name=PORT::3802"
             echo "::set-output name=ENVIRONMENT_NAME::stage"
           echo "::set-output name=BRANCH_NAME::stage"
           elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            echo "::set-output name=PORT::3700"
+            echo "::set-output name=PORT::3801"
             echo "::set-output name=ENVIRONMENT_NAME::production"
             echo "::set-output name=BRANCH_NAME::main"
           fi

@@ -1,19 +1,19 @@
 // Node Deps
-import { pathsToModuleNameMapper } from "ts-jest"
+import { pathsToModuleNameMapper } from 'ts-jest'
 // Config
-import { compilerOptions } from "./tsconfig.json"
+import { compilerOptions } from './tsconfig.json'
 // Types
-import type { Config } from "@jest/types"
+import type { Config } from '@jest/types'
 
 const paths = compilerOptions.paths
 
 const jestConfig: Config.InitialOptions = {
   // Base
   rootDir: './',
-  testEnvironment: "node",
-  testRegex: ".*\\.spec\\.ts$",
+  testEnvironment: 'node',
+  testRegex: '.*\\.spec\\.ts$',
   transform: {
-    "^.+\\.ts$": "ts-jest"
+    '^.+\\.ts$': 'ts-jest'
   },
   passWithNoTests: true,
   // Aliases
@@ -25,9 +25,9 @@ const jestConfig: Config.InitialOptions = {
   ),
   // Coverage
   collectCoverageFrom: [
-    "**/*.(t|j)s"
+    '**/*.(t|j)s'
   ],
-  coverageDirectory: "coverage"
+  coverageDirectory: 'coverage'
 }
 
 export default jestConfig

@@ -7,25 +7,100 @@ datasource data {
   url      = env("DATABASE_URL")
 }
 
-// Users Models
-model Application {
-  app_id            Int                 @id @default(autoincrement())
-  title             String              @unique() @data.VarChar(64)
-  is_verified       Boolean             @default(true)
-  owner_uid         Int
-  secure_key        String              @unique() @data.VarChar(256)
-  access_key        String              @data.VarChar(256)
-  status            applications_status @default(disabled)
-  access_permission String              @data.VarChar(512)
-  domain            String              @unique() @data.VarChar(64)
-  redirect_uri      String              @data.VarChar(64)
-  created_at        Int
+// App Models
+model application {
+  appId            Int                 @id @default(autoincrement()) @map("app_id")
+  title            String              @unique() @map("title") @data.VarChar(64)
+  isVerified       Boolean             @default(true) @map("is_verified")
+  ownerUid         Int                 @map("owner_uid") @data.UnsignedInt
+  secureKey        String              @unique() @map("secure_key") @data.VarChar(256)
+  accessKey        String              @map("access_key") @data.VarChar(256)
+  status           applications_status @default(disabled)
+  accessPermission String              @map("access_permission") @data.VarChar(512)
+  domain           String              @unique() @data.VarChar(64)
+  redirectUri      String              @map("redirect_uri") @data.VarChar(64)
+  createdAt        DateTime            @default(now()) @map("created_at")
 
-  @@index([owner_uid], map: "owner_uid")
+  @@index([ownerUid], map: "owner_uid")
   @@map("applications")
+}
+
+model device {
+  id        Int              @id @default(autoincrement()) @map("id")
+  clientId  String           @unique @default(uuid()) @map("client_id")
+  platform  device_platforms @map("platform")
+  ip        String           @map("ip") @data.VarChar(15)
+  userId    Int?             @map("user_id")
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  user  user?   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Restrict)
+  token token[]
+
+  @@index([userId])
+  @@map("devices")
+}
+
+// Users Models
+model user {
+  id          Int        @id @map("id")
+  role        user_roles @default(USER_DEFAULT) @map("role")
+  firstName   String     @map("first_name") @data.VarChar(64)
+  username    String     @unique() @default(uuid()) @map("login") @data.VarChar(64)
+  photoUrl    String     @unique() @map("photo_url")
+  lastVisited DateTime   @default(now()) @map("last_visited")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @default(now()) @updatedAt @map("updated_at")
+  device      device[]
+  token       token[]
+
+  @@map("users")
+}
+
+model token {
+  id           Int      @id @default(autoincrement()) @map("id")
+  userId       Int      @map("user_id")
+  clientId     String   @map("client_id")
+  accessToken  String   @map("access_token") @data.VarChar(1024)
+  refreshToken String   @map("refresh_token") @data.VarChar(256)
+  expiresAt    DateTime @map("expires_at")
+  revoked      Boolean  @default(false) @map("is_revoked") @data.TinyInt
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user   user   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  device device @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+
+  // Index
+  @@index([refreshToken])
+  @@map("tokens")
 }
 
 enum applications_status {
   enabled
   disabled
+}
+
+enum user_roles {
+  ADMIN
+  MODERATOR
+  USER_DEFAULT
+  USER_VERIFY
+  AUTHOR
+  CO_AUTHOR
+  DEV_VERIFY
+  DEV_POOL
+  QA_VERIFY
+  QA_DEFAULT
+  NONE
+}
+
+enum device_platforms {
+  WINDOWS
+  LINUX
+  ANDROID
+  IPHONE
+  IPAD
+  MACINTOSH
 }
