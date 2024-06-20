@@ -1,8 +1,12 @@
+// Node Deps
 import { Controller, Ip, Post, Query } from '@nestjs/common'
-import { DeviceService } from '@/device/device.service'
 import { ApiQuery, ApiTags } from '@nestjs/swagger'
-import { availablePlatforms } from '@/device/device.const'
+// Services
+import { DeviceService } from '@/device/device.service'
+// Swagger Schema
 import { CreateDeviceSchema } from '@/device/dto/validate'
+// Types & Interfaces
+import { availablePlatforms } from '@/device/device.const'
 
 @Controller('device')
 @ApiTags('Device')

@@ -1,12 +1,18 @@
 import type { Request as DefaultRequest } from 'express'
-import { user, device_platforms, user_roles, device } from '@prisma/client'
+import {
+  type user,
+  type device,
+  device_platforms,
+  user_roles,
+} from '@prisma/client'
 
 export enum EAvailableCookies {
-  'clientId' = 'client-id'
+  'client-id',
+  'Authorization',
 }
 
 export interface Request extends DefaultRequest {
-  cookies: Record<keyof typeof EAvailableCookies, typeof EAvailableCookies>
+  cookies: Record<keyof typeof EAvailableCookies, keyof typeof EAvailableCookies>,
 }
 
 export type TResponseError = {

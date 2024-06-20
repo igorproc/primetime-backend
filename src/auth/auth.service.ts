@@ -3,8 +3,6 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
 // Other Services
 import { DbService } from '@/db/db.service'
 import { JwtService } from '@nestjs/jwt'
-import { DeviceService } from '@/device/device.service'
-import { UserService } from '@/user/user.service'
 import { TelegramService } from '@/auth/telegram/telegram.service'
 // Utils
 import { addTimeToCurrentDate, getCurrentDate } from '@utils/time'
@@ -13,25 +11,19 @@ import { isValidUUID } from '@utils/validate'
 // Errors
 import { AuthErrors } from '@/auth/auth.errors'
 // Types & Interfaces
-import { EAuthWays, IAuthServiceProvider, type TAuthInput } from '@/auth/auth.types'
+import {
+  EAuthWays,
+  type IAuthServiceProvider,
+  type TAuthInput,
+  type TAuthTokensPair,
+  type IRefreshTokenPayload,
+} from '@/auth/auth.types'
 import { SuccessAuthSchema, SuccessAuthUser } from '@/auth/dto/swagger.dto'
-import { EUserRoles } from '@/global.types'
 import { checkErrorIsResponseError } from '@utils/error'
 
 // Expand if add new auth service
 type TAvailableServices = TelegramService
 type TServiceAdapter = { [key in EAuthWays]: TAvailableServices }
-
-export type TAuthTokensPair = {
-  accessToken: string,
-  refreshToken: string,
-}
-
-type TAccessTokenPayload = {
-  id: number,
-  clientId: string,
-  role: EUserRoles
-}
 
 @Injectable()
 export class AuthService {
@@ -40,13 +32,62 @@ export class AuthService {
   constructor(
     private readonly db: DbService,
     private readonly jwtService: JwtService,
-    private readonly deviceService: DeviceService,
-    private readonly userService: UserService,
     private readonly telegramAuthService: TelegramService
   ) {
     this.serviceAdapterByType = {
       TG: telegramAuthService
     }
+  }
+
+  private dbActions = {
+    getDeviceByClientId: async (clientId: string) => {
+      if (!isValidUUID(clientId)) {
+        throw new HttpException(
+          AuthErrors.NO_CLIENT_ID,
+          HttpStatus.NOT_ACCEPTABLE
+        )
+      }
+
+      return this.db
+        .device
+        .findUnique({
+          where: { clientId }
+        })
+    },
+
+    setUserIdByClientId: async (userId: number, clientId: string) => {
+      return this.db
+        .device
+        .update({
+          where: { clientId },
+          data: { userId }
+        })
+    },
+
+    removeUserFromClientId: async (clientId: string) => {
+      return this.db
+        .device
+        .update({
+          where: { clientId },
+          data: { userId: null }
+        })
+    },
+
+    getUserById: async (id: number) => {
+      return this.db
+        .user
+        .findUnique({
+          where: { id },
+          select: {
+            id: true,
+            role: true,
+            firstName: true,
+            username: true,
+            photoUrl: true,
+            lastVisited: true,
+          }
+        })
+    },
   }
 
   private async validateToken(tokenType: 'access' | 'refresh', token: string): Promise<boolean> {
@@ -111,13 +152,7 @@ export class AuthService {
   }
 
   public async createTokens(data: SuccessAuthUser, clientId: string): Promise<TAuthTokensPair> {
-    if (!isValidUUID(clientId)) {
-      throw new HttpException(
-        AuthErrors.NO_CLIENT_ID,
-        HttpStatus.NOT_ACCEPTABLE
-      )
-    }
-    if (!await this.deviceService.getByUUID(clientId)) {
+    if (!await this.dbActions.getDeviceByClientId(clientId)) {
       throw new HttpException(
         AuthErrors.BAD_CLIENT_ID,
         HttpStatus.FORBIDDEN
@@ -159,12 +194,12 @@ export class AuthService {
         HttpStatus.INTERNAL_SERVER_ERROR
       )
     }
-    await this.deviceService.setUserIdByClientId(data.id, clientId)
+    await this.dbActions.setUserIdByClientId(data.id, clientId)
     return tokens
   }
 
   public async auth(clientId: string, type: keyof typeof EAuthWays, data: TAuthInput): Promise<SuccessAuthSchema> {
-    let userData = await this.userService.getUserById(data.id)
+    let userData = await this.dbActions.getUserById(data.id)
     if (userData) {
       const tokens = await this.createTokens(userData, clientId)
       return { user: userData, tokens }
@@ -179,7 +214,7 @@ export class AuthService {
 
   public async revokeTokens(refreshToken: string): Promise<TAuthTokensPair> {
     const currentDate = getCurrentDate()
-    const jwtDecode = await this.decodeJWT<TAccessTokenPayload>(
+    const jwtDecode = await this.decodeJWT<IRefreshTokenPayload>(
       'refresh',
       refreshToken
     )
@@ -206,14 +241,9 @@ export class AuthService {
 
   public async logout(refreshToken: string) {
     try {
-      const jwtData: TAccessTokenPayload = await this.decodeJWT('refresh', refreshToken)
-      await this.db.device.updateMany({
-        where: { userId: jwtData.id },
-        data: { userId: null }
-      })
-      await this.db.token.deleteMany({
-        where: { refreshToken }
-      })
+      const jwtData: IRefreshTokenPayload = await this.decodeJWT('refresh', refreshToken)
+      await this.dbActions.removeUserFromClientId(jwtData.clientId)
+      await this.deleteTokensByRefreshToken(refreshToken)
 
       return { successLogout: true }
     } catch (error) {

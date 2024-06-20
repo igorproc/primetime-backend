@@ -9,14 +9,6 @@ export class DeviceService {
   ) {
   }
 
-  public async getByUUID(clientId: string) {
-    return this.db
-      .device
-      .findUnique({
-        where: { clientId }
-      })
-  }
-
   public async createClientId(ip: string, payload: string) {
     return this.db
       .device
@@ -28,24 +20,6 @@ export class DeviceService {
         select: {
           clientId: true
         }
-      })
-  }
-
-  public async setUserIdByClientId(userId: number, clientId: string) {
-    return this.db
-      .device
-      .update({
-        where: { clientId },
-        data: { userId }
-      })
-  }
-
-  public async removeUserFromClientId(clientId: string) {
-    return this.db
-      .device
-      .update({
-        where: { clientId },
-        data: { userId: null }
       })
   }
 }

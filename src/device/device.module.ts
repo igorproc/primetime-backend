@@ -5,8 +5,8 @@ import { DeviceController } from './device.controller'
 
 @Module({
   imports: [DbModule],
-  providers: [DeviceService],
   controllers: [DeviceController],
+  providers: [DeviceService],
   exports: [DeviceService]
 })
 export class DeviceModule {

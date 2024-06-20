@@ -4,6 +4,7 @@ import { Module } from '@nestjs/common'
 import Env from '@/config/env'
 import Telegram from '@/config/telegram'
 import Schedule from '@/config/schedule'
+import Rbac from '@/config/rbac'
 // Other Modules
 import { DbModule } from '@/db/db.module'
 import { AuthModule } from '@/auth/auth.module'
@@ -13,18 +14,19 @@ import { DeviceModule } from './device/device.module'
 const EnvConfigModule = Env()
 const TelegramConfigModule = Telegram()
 const ScheduleConfigModule = Schedule()
+const RbacConfigModule = Rbac()
 
 @Module({
   imports: [
     EnvConfigModule,
     ScheduleConfigModule,
-    DbModule,
-    AuthModule,
-    UserModule,
     TelegramConfigModule,
-    DeviceModule
+    DbModule,
+    RbacConfigModule,
+    UserModule,
+    DeviceModule,
+    AuthModule,
   ]
 })
 
-export class AppModule {
-}
+export class AppModule {}
