@@ -30,7 +30,7 @@ export class AuthGuard implements CanActivate {
       }
 
       return true
-    } catch (error) {
+    } catch {
       throw new UnauthorizedException(AuthErrors.BAD_JWT)
     }
   }
@@ -39,7 +39,16 @@ export class AuthGuard implements CanActivate {
     context: ExecutionContext
   ): Promise<boolean> {
     const request: Request = context.switchToHttp().getRequest()
-    const token = request.cookies.Authorization
+    let token = request.cookies.Authorization
+
+    if (!token) {
+      if (!request.headers.authorization) {
+        throw new UnauthorizedException(AuthErrors.LOGOUT)
+      }
+
+      token = request.headers.authorization
+    }
+    token = token.replace('Bearer ', '')
     this.checkAccessToken(token)
 
     const currentDate = getCurrentDate()
