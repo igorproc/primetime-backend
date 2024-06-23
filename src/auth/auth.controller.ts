@@ -12,7 +12,7 @@ import {
   ApiResponse,
   ApiExtraModels,
   ApiQuery,
-  ApiOkResponse
+  ApiOkResponse,
 } from '@nestjs/swagger'
 // Current Module Deps
 import { AuthService } from './auth.service'
@@ -25,13 +25,12 @@ import { DefaultErrorSchema } from '@/global.dto'
 import { AuthErrors } from '@/auth/auth.errors'
 
 @ApiTags('Auth')
-@Controller('auth')
+@Controller({ path: 'auth' })
 export class AuthController {
 
   constructor(
     private readonly authService: AuthService
-  ) {
-  }
+  ) {}
 
   @Post('login')
   @ApiOperation({ description: 'User login by others services' })
