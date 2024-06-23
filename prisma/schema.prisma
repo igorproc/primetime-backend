@@ -29,7 +29,7 @@ model device {
   id        Int              @id @default(autoincrement()) @map("id")
   clientId  String           @unique @default(uuid()) @map("client_id")
   platform  device_platforms @map("platform")
-  ip        String           @map("ip") @data.VarChar(15)
+  ip        String           @map("ip") @data.VarChar(32)
   userId    Int?             @map("user_id")
   createdAt DateTime         @default(now()) @map("created_at")
   updatedAt DateTime         @default(now()) @updatedAt @map("updated_at")
