@@ -17,7 +17,7 @@ export default function (app: INestApplication) {
 
   app.useGlobalPipes(
     new ValidationPipe({
-      // transform: true,
+      transform: true,
       disableErrorMessages: isProd,
     })
   )

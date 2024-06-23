@@ -10,7 +10,7 @@ export function IsActivationKey(validationOptions?: ValidationOptions) {
       options: validationOptions,
       validator: {
         validate(value: any) {
-          const regex = /^[a-zA-Z0-9]*-[a-zA-Z0-9]*-[a-zA-Z0-9]*-[a-zA-Z0-9]*-[a-zA-Z0-9]*$/g
+          const regex = /([0-9a-zA-Z]{5,13}-){1,3}[0-9a-zA-Z]{5,13}/gm
           return regex.test(value)
         },
         defaultMessage(args: ValidationArguments) {
