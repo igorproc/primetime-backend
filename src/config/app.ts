@@ -5,8 +5,6 @@ import * as cookieParser from 'cookie-parser'
 // Config
 import Cors from '@/config/cors'
 import Swagger from '@/config/swagger'
-// Constants
-import { COOKIE_MAX_AGE } from '@/const/app'
 
 export default function (app: INestApplication) {
   const isProd = env.APP_MODE === 'production'
@@ -14,12 +12,6 @@ export default function (app: INestApplication) {
   app.use(
     cookieParser()
   )
-  app.enableCors({
-    credentials: true,
-    origin: true,
-    maxAge: COOKIE_MAX_AGE
-  })
-
   Cors(app)
   Swagger(app)
 

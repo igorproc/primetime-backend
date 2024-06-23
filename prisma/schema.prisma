@@ -77,6 +77,43 @@ model token {
   @@map("tokens")
 }
 
+// Content
+
+model dataBalancer {
+  id       Int             @id @default(autoincrement()) @map("id")
+  code     balancer_code   @unique @map("code")
+  name     String          @unique @map("display_name") @data.VarChar(32)
+  docs     String          @unique @map("documentation_link") @data.VarChar(128)
+  status   balancer_status @map("status")
+  selected Boolean         @default(false) @data.TinyInt
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  dataBalancerToken dataBalancerToken[]
+
+  // Index
+  @@index([code])
+  @@map("data_balancers")
+}
+
+model dataBalancerToken {
+  id    Int           @id @default(autoincrement()) @map("id")
+  type  balancer_code @map("balancer_code")
+  token String        @map("token") @data.VarChar(64)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  balancer dataBalancer @relation(fields: [type], references: [code])
+
+  // Index
+  @@index([type])
+  @@map("data_balancer_tokens")
+}
+
 enum applications_status {
   enabled
   disabled
@@ -103,4 +140,15 @@ enum device_platforms {
   IPHONE
   IPAD
   MACINTOSH
+}
+
+enum balancer_code {
+  KP
+  KP_TG_KEY
+}
+
+enum balancer_status {
+  ONLINE
+  OFFLINE
+  DEPRECATED
 }

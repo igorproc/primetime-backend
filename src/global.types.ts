@@ -12,7 +12,7 @@ export enum EAvailableCookies {
 }
 
 export interface Request extends DefaultRequest {
-  cookies: Record<keyof typeof EAvailableCookies, keyof typeof EAvailableCookies>,
+  cookies: Record<keyof typeof EAvailableCookies, string>,
 }
 
 export type TResponseError = {

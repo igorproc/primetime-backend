@@ -1,7 +1,12 @@
 // Node Deps
+import { UnauthorizedException } from '@nestjs/common'
 import { createHmac, createHash } from 'crypto'
 import { hashSync } from 'bcrypt'
 import { jwtDecode, type JwtPayload } from 'jwt-decode'
+// Utils
+import { getCurrentTimestamp } from '@utils/time'
+// Errors
+import { AuthErrors } from '@/auth/auth.errors'
 
 export function cryptStringToSha256ByKey(message: string, key: string): string {
   return createHmac('sha256', key, { encoding: 'hex' })
@@ -20,5 +25,12 @@ export function encryptWithoutSalt(data: string | Buffer): string {
 }
 
 export function getJWTPayload<T>(token: string): T & JwtPayload {
-  return jwtDecode<T>(token)
+  const data = jwtDecode<T & JwtPayload>(token)
+  const timestamp = getCurrentTimestamp()
+
+  if (timestamp > data.exp) {
+    throw new UnauthorizedException(AuthErrors.LOGOUT)
+  }
+
+  return data
 }

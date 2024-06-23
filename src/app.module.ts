@@ -10,6 +10,7 @@ import { DbModule } from '@/db/db.module'
 import { AuthModule } from '@/auth/auth.module'
 import { UserModule } from '@/user/user.module'
 import { DeviceModule } from './device/device.module'
+import { ContentModule } from './content/content.module'
 
 const EnvConfigModule = Env()
 const TelegramConfigModule = Telegram()
@@ -26,6 +27,7 @@ const RbacConfigModule = Rbac()
     UserModule,
     DeviceModule,
     AuthModule,
+    ContentModule,
   ]
 })
 
