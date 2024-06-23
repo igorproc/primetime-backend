@@ -35,4 +35,4 @@ EXPOSE 3000
 
 SHELL ["bash", "-c"]
 
-CMD npm run start:${ENVIRONMENT_NAME}
+CMD npm run start:production
