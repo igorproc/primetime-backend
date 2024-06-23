@@ -1,5 +1,5 @@
 // Node Deps
-import { ValidationPipe, type INestApplication } from '@nestjs/common'
+import { type INestApplication, ValidationPipe, VersioningType } from '@nestjs/common'
 import { env } from 'process'
 import * as cookieParser from 'cookie-parser'
 // Config
@@ -14,6 +14,10 @@ export default function (app: INestApplication) {
   )
   Cors(app)
   Swagger(app)
+
+  app.enableVersioning({
+    type: VersioningType.URI,
+  })
 
   app.useGlobalPipes(
     new ValidationPipe({

@@ -3,17 +3,14 @@ import { DocumentBuilder, SwaggerCustomOptions, SwaggerModule } from '@nestjs/sw
 import { env } from 'process'
 // Types
 import type { INestApplication } from '@nestjs/common'
-import { tr } from '@faker-js/faker'
-
-interface IRequestInterceptor {
-  credentials: string,
-}
 
 export default function(app: INestApplication) {
+  const VERSION = '1.0'
+
   const config = new DocumentBuilder()
     .setTitle('Primetime')
-    .setDescription(`${env.APP_MODE} api`)
-    .setVersion('1.0')
+    .setDescription(`${env.APP_MODE} api V-${VERSION}`)
+    .setVersion(VERSION)
     .addBearerAuth({
       type: 'http',
       in: 'cookie',
@@ -21,11 +18,14 @@ export default function(app: INestApplication) {
     .build()
 
   const customOptions: SwaggerCustomOptions = {
+    useGlobalPrefix: true,
+    url: `${env.APP_URL}/api/docs`,
+    customSiteTitle: `PrimeTime API v${VERSION}`,
     swaggerOptions: {
       withCredentials: true,
     }
   }
 
   const document = SwaggerModule.createDocument(app, config)
-  SwaggerModule.setup('api/docs', app, document, customOptions)
+  SwaggerModule.setup('docs', app, document, customOptions)
 }
