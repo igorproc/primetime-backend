@@ -8,7 +8,6 @@ import Swagger from '@/config/swagger'
 
 export default function (app: INestApplication) {
   const isProd = env.APP_MODE === 'production'
-  app.setGlobalPrefix('api')
   app.use(
     cookieParser()
   )

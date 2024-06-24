@@ -8,7 +8,7 @@ import { CreateDeviceSchema } from '@/device/dto/validate'
 // Types & Interfaces
 import { availablePlatforms } from '@/device/device.const'
 
-@Controller('device')
+@Controller('api/device')
 @ApiTags('Device')
 export class DeviceController {
   constructor(
