@@ -18,16 +18,12 @@ export default function(app: INestApplication) {
     .build()
 
   const customOptions: SwaggerCustomOptions = {
-    useGlobalPrefix: true,
-    swaggerUrl: `${env.APP_URL}/api/docs`,
-    url: `${env.APP_URL}/api/docs`,
     customSiteTitle: `PrimeTime API v${VERSION}`,
     swaggerOptions: {
       withCredentials: true,
-      useBasicAuthenticationWithAccessCodeGrant: true,
     }
   }
 
   const document = SwaggerModule.createDocument(app, config)
-  SwaggerModule.setup('docs', app, document, customOptions)
+  SwaggerModule.setup('api/docs', app, document, customOptions)
 }

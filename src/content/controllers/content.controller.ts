@@ -8,7 +8,7 @@ import { ContentService } from '@/content/content.service'
 import { GetMovieInputSchema } from '@/content/dto/validate.dto'
 
 @ApiTags('Content')
-@Controller('content')
+@Controller('api/content')
 export class ContentController {
   constructor(
     private readonly contentService: ContentService,

@@ -25,7 +25,7 @@ import { DefaultErrorSchema } from '@/global.dto'
 import { AuthErrors } from '@/auth/auth.errors'
 
 @ApiTags('Auth')
-@Controller({ path: 'auth' })
+@Controller({ path: 'api/auth' })
 export class AuthController {
 
   constructor(

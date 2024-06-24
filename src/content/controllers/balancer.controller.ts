@@ -11,7 +11,6 @@ import {
   AddBalancerTokenInputSchema,
   ChangeActiveBalancerInputSchema,
   GetBalancersListInputSchema,
-  GetMovieInputSchema
 } from '@/content/dto/validate.dto'
 // Swagger Schemas
 import { DefaultErrorSchema } from '@/global.dto'
@@ -23,7 +22,7 @@ import {
 import { ContentErrors } from '@/content/content.errors'
 
 @ApiTags('Content Balancers')
-@Controller('balancer')
+@Controller('api/balancer')
 export class BalancerController {
   constructor(
     private readonly contentService: ContentService,
