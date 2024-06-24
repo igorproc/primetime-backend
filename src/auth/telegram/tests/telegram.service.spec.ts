@@ -11,7 +11,7 @@ import { DbModule } from '@/db/db.module'
 import { getDataFromJson } from '@@/test/utis/data.util'
 // Types & Interfaces
 import type { TelegramAuthInput } from '@/auth/telegram/dto/validate.dto'
-import Env from '@/config/env'
+import Env from '@/config/modules/env'
 
 type JSONData = {
   hashCheck: TelegramAuthInput,

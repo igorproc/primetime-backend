@@ -2,9 +2,8 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
 // Other Services
 import { DbService } from '@/db/db.service'
-import { CacheService } from '@/content/cache/cache.service'
-import { KpPayService } from '@/content/kp-pay/kp-pay.service'
-import { KpService } from '@/content/kp/kp.service'
+import { KpPayService } from '@/content/balancers/kp-pay/kp-pay.service'
+import { KpService } from '@/content/balancers/kp/kp.service'
 // Utils
 import { getPageDataSize } from '@utils/generate'
 // Validators
@@ -34,7 +33,6 @@ export class ContentService {
 
   constructor(
     private readonly db: DbService,
-    private readonly cache: CacheService,
     private readonly kpPay: KpPayService,
     private readonly kp: KpService,
   ) {

@@ -2,7 +2,7 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { JwtModule } from '@nestjs/jwt'
 // Test Deps
-import Env from '@/config/env'
+import Env from '@/config/modules/env'
 import { AuthService } from '@/auth/auth.service'
 import { TelegramModule } from '@/auth/telegram/telegram.module'
 import { DeviceModule } from '@/device/device.module'

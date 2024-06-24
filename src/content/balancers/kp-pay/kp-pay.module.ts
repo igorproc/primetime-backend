@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common'
-import { KpPayService } from './kp-pay.service'
+import { KpPayService } from '@/content/balancers/kp-pay/kp-pay.service'
 
 @Module({
   providers: [KpPayService],
