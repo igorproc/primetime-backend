@@ -11,8 +11,6 @@ export default function(app: INestApplication) {
     .setTitle('Primetime')
     .setDescription(`${env.APP_MODE} api V-${VERSION}`)
     .setVersion(VERSION)
-    .addServer('/api/docs')
-    .addServer(`https://${env.APP_URL}/api/docs`)
     .addBearerAuth({
       type: 'http',
       in: 'cookie',
@@ -21,11 +19,12 @@ export default function(app: INestApplication) {
 
   const customOptions: SwaggerCustomOptions = {
     useGlobalPrefix: true,
+    swaggerUrl: `${env.APP_URL}/api/docs`,
     url: `${env.APP_URL}/api/docs`,
     customSiteTitle: `PrimeTime API v${VERSION}`,
-    customfavIcon: '../../../client/favicon.ico',
     swaggerOptions: {
       withCredentials: true,
+      useBasicAuthenticationWithAccessCodeGrant: true,
     }
   }
 
