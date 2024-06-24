@@ -1,16 +1,16 @@
 // Node Deps
 import { Module } from '@nestjs/common'
 // Config
-import Env from '@/config/env'
-import Telegram from '@/config/telegram'
-import Schedule from '@/config/schedule'
-import Rbac from '@/config/rbac'
+import Env from '@/config/modules/env'
+import Telegram from '@/config/modules/telegram'
+import Schedule from '@/config/modules/schedule'
+import Rbac from '@/config/modules/rbac'
 // Other Modules
 import { DbModule } from '@/db/db.module'
 import { AuthModule } from '@/auth/auth.module'
 import { UserModule } from '@/user/user.module'
-import { DeviceModule } from './device/device.module'
-import { ContentModule } from './content/content.module'
+import { DeviceModule } from '@/device/device.module'
+import { ContentModule } from '@/content/content.module'
 
 const EnvConfigModule = Env()
 const TelegramConfigModule = Telegram()

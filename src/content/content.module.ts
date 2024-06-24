@@ -7,18 +7,18 @@ import { AuthModule } from '@/auth/auth.module'
 import { ContentService } from '@/content/content.service'
 import { BalancerController } from '@/content/controllers/balancer.controller'
 // Child Modules
-import { CacheModule } from '@/content/cache/cache.module'
-import { KpPayModule } from '@/content/kp-pay/kp-pay.module'
-import { KpModule } from '@/content/kp/kp.module'
+import { KpPayModule } from '@/content/balancers/kp-pay/kp-pay.module'
+import { KpModule } from '@/content/balancers/kp/kp.module'
 import { ContentController } from '@/content/controllers/content.controller'
+import { MovieModule } from '@/content/cache/movie/movie.module'
 
 @Module({
   imports: [
     DbModule,
     AuthModule,
-    CacheModule,
     KpPayModule,
-    KpModule
+    KpModule,
+    MovieModule
   ],
   controllers: [
     BalancerController,
