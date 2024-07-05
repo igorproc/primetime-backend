@@ -1,5 +1,244 @@
+// Node Deps
 import { Injectable } from '@nestjs/common'
+// Other Services
+import { DbService } from '@/db/db.service'
+import { CountryService } from '@/movie/country/country.service'
+import { GenresService } from '@/movie/genres/genres.service'
+// Utils
+import { translateRuSentence } from '@utils/translate'
+// Swagger Schemas
+import { SuccessGetMovie } from '@/content/dto/swagger.dto'
+// Types & Interfaces
+import {
+  EMovieVotes,
+  IGetMovie
+} from '@/content/balancers/balancer.types'
+import {
+  movie_votes_codes as EMovieVoteCodes
+} from '@prisma/client'
+import {
+  TMovieModel,
+  TMovieNames,
+  TMovieRatingModel,
+  TMovieYears
+} from '@/global.types'
+
+type TFormatMovie = {
+  names: TMovieNames[],
+  countries: string[],
+  genres: string[],
+  ratings: TMovieRatingModel[],
+  years: TMovieYears,
+} & TMovieModel
 
 @Injectable()
 export class MovieService {
+  private readonly NAME_REGEXP = /[+^*_]/gi
+
+  constructor(
+    private readonly db: DbService,
+    private readonly country: CountryService,
+    private readonly genre: GenresService,
+  ) {}
+
+  // Utils
+  private generateSlug(kinopoiskId: number, names: IGetMovie['names']) {
+    let name = names.find(item => item.language === 'EN')?.name
+    if (!name) {
+      const translatedName = translateRuSentence(
+        names.find(item => item.language === 'RU')?.name
+      )
+
+      name = translatedName || kinopoiskId.toString()
+    }
+    name = name.toLowerCase()
+
+    const slicedId = kinopoiskId.toString().slice(0, 4)
+    const formatedName = name
+      .replaceAll(' ', '-')
+      .replaceAll(this.NAME_REGEXP, '-')
+
+    return `${slicedId}-${formatedName}`
+  }
+
+  // Cache Actions
+
+  private async cacheMovieCountries(id: number, countries: IGetMovie['countries']) {
+    for (const country of countries) {
+      const data = await this.country.findOrCreateGenreByName(country)
+
+      await this.db
+        .movieCountry
+        .create({
+          data: { watchId: id, name: data.name }
+        })
+    }
+
+    return countries
+  }
+
+  private async cacheMovieGenres(id: number, genres: IGetMovie['genres']) {
+    for (const genre of genres) {
+      const data = await this.genre.findOrCreateGenreByName(genre)
+
+      await this.db
+        .movieGenre
+        .create({
+          data: { watchId: id, name: data.name }
+        })
+    }
+
+    return genres
+  }
+
+  private async cacheMovieNames(id: number, names: IGetMovie['names']) {
+    const nameList = []
+
+    for (const name of names) {
+      const data = await this.db
+        .movieName
+        .create({
+          data: { watchId: id, code: name.language, name: name.name }
+        })
+
+      nameList.push(data)
+    }
+    return nameList
+  }
+
+  private async cacheMovieRatings(id: number, rates: IGetMovie['votes']) {
+    const votes = []
+    const codeConditionMap = {
+      [EMovieVotes.kp]: EMovieVoteCodes.KINOPPOISK,
+      [EMovieVotes.imdb]: EMovieVoteCodes.IMDB,
+      [EMovieVotes.critics]: EMovieVoteCodes.CRITICS,
+      [EMovieVotes.ruCritics]: EMovieVoteCodes.RU_CRITICS,
+    }
+
+    for (const [code, rate] of Object.entries(rates)) {
+      const data = await this.db
+        .movieRating
+        .create({
+          data: {
+            watchId: id,
+            code: codeConditionMap[code],
+            votes: rate.votes,
+            rating: rate.rating
+          }
+        })
+
+      votes.push(data)
+    }
+    return votes
+  }
+
+  private async cacheMovieYears(
+    id: number,
+    years: IGetMovie['years'],
+  ) {
+    return this.db
+      .movieYear
+      .create({
+        data: {
+          id,
+          year: years.release,
+          start: years?.start || null,
+          end: years?.end || null,
+        }
+      })
+  }
+
+  private formatCacheMovieData(payload: TFormatMovie): SuccessGetMovie {
+    const formatedVotes = payload.ratings
+      .map(item => {
+        return {
+          code: item.code,
+          rating: item.rating,
+          votes: item.votes,
+        }
+      })
+    const formatedNames = payload.names
+      .map(item => {
+        return {
+          name: item.name,
+          language: item.code
+        }
+      })
+
+    const data: SuccessGetMovie = {
+      kinopoiskId: payload.kinopoiskId,
+      imdbId: payload.imdbId,
+      // type: payload.type,
+      duration: payload.duration,
+      poster: {
+        preview: payload.posterPreview,
+        display: payload.posterDisplay,
+      },
+      ageLimits: payload.ageLimits,
+      countries: payload.countries,
+      genres: payload.genres,
+      years: {
+        release: payload.years.year,
+        start: payload.years.start,
+        end: payload.years.end,
+      },
+      names: formatedNames,
+      votes: formatedVotes,
+    }
+  }
+
+  // Actions
+  public async cacheMovie(payload: IGetMovie) {
+    const movieData = await this.db
+      .watchContent
+      .create({
+        data: {
+          type: payload.type,
+          slug: this.generateSlug(payload.kinopoiskId, payload.names),
+          duration: payload.duration,
+          kinopoiskId: payload.kinopoiskId,
+          imdbId: payload.imdbId,
+          posterDisplay: payload.poster.display,
+          posterPreview: payload.poster.preview,
+          ageLimits: payload.rating.age,
+        }
+      })
+
+    const [
+      countries,
+      genres,
+      names,
+      ratings,
+      years,
+    ] = await Promise.all([
+      this.cacheMovieCountries(movieData.id, payload.countries),
+      this.cacheMovieGenres(movieData.id, payload.genres),
+      this.cacheMovieNames(movieData.id, payload.names),
+      this.cacheMovieRatings(movieData.id, payload.votes),
+      this.cacheMovieYears(movieData.id, payload?.years || null)
+    ])
+
+    return this.formatCacheMovieData({
+      ...movieData,
+      countries,
+      genres,
+      names,
+      ratings,
+      years,
+    })
+  }
+
+  // Getters
+  public async findByKinopoiskId(kinopoiskId: number) {
+    const watchData = await this.db
+      .watchContent
+      .findUnique({
+        where: { kinopoiskId }
+      })
+
+    if (!watchData) {
+      return null
+    }
+
+  }
 }

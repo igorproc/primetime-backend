@@ -4,6 +4,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
 import { DbService } from '@/db/db.service'
 import { KpPayService } from '@/content/balancers/kp-pay/kp-pay.service'
 import { KpService } from '@/content/balancers/kp/kp.service'
+import { MovieService } from '@/content/cache/movie/movie.service'
 // Utils
 import { getPageDataSize } from '@utils/generate'
 // Validators
@@ -16,7 +17,8 @@ import { ContentErrors } from '@/content/content.errors'
 // Swagger Schemas
 import {
   SuccessChangeContentBalancer,
-  SuccessGetContentBalancerList
+  SuccessGetContentBalancerList,
+  SuccessGetMovie,
 } from '@/content/dto/swagger.dto'
 // Types & Interfaces
 import { balancer_code as EBalancerCodes } from '@prisma/client'
@@ -35,6 +37,7 @@ export class ContentService {
     private readonly db: DbService,
     private readonly kpPay: KpPayService,
     private readonly kp: KpService,
+    private readonly movie: MovieService,
   ) {
     this.availableServices = { KP: this.kp, KP_TG_KEY: this.kpPay }
     this.tokensIds = { KP: 0, KP_TG_KEY: 0 }
@@ -206,10 +209,16 @@ export class ContentService {
     }
   }
 
-  public async getMovie(kinopoiskId: number) {
+  public async getMovie(kinopoiskId: number): Promise<SuccessGetMovie> {
+    const cacheData = await this.movie.findByKinopoiskId(kinopoiskId)
+    if (cacheData) {
+      return cacheData
+    }
+
     const balancer = await this.getCurrentBalancer()
     const token = await this.getToken(balancer.code)
+    const balancerData = await balancer.service.getMovie(token, kinopoiskId)
 
-    return balancer.service.getMovie(token, kinopoiskId)
+    return this.movie.cacheMovie(balancerData)
   }
 }
