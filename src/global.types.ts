@@ -6,6 +6,7 @@ import {
   type movieRating,
   type movieYear,
   type movieName,
+  type movieContent,
   device_platforms,
   user_roles,
 } from '@prisma/client'
@@ -35,3 +36,4 @@ export type TMovieModel = watchContent
 export type TMovieRatingModel = movieRating
 export type TMovieYears = movieYear
 export type TMovieNames = movieName
+export type TMovieContent = movieContent
