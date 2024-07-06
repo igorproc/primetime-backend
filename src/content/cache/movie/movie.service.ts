@@ -16,11 +16,12 @@ import {
 import {
   movie_votes_codes as EMovieVoteCodes
 } from '@prisma/client'
-import {
+import type {
   TMovieModel,
   TMovieNames,
   TMovieRatingModel,
-  TMovieYears
+  TMovieYears,
+  TMovieContent
 } from '@/global.types'
 
 type TFormatMovie = {
@@ -29,6 +30,7 @@ type TFormatMovie = {
   genres: string[],
   ratings: TMovieRatingModel[],
   years: TMovieYears,
+  content: TMovieContent,
 } & TMovieModel
 
 @Injectable()
@@ -134,6 +136,19 @@ export class MovieService {
     return votes
   }
 
+  private async cacheMovieContents(id: number, payload: Pick<IGetMovie, 'description' | 'slogan'>) {
+    return this.db
+      .movieContent
+      .create({
+        data: {
+          id,
+          slogan: payload.slogan,
+          shortDescription: payload.description.short,
+          description: payload.description.default,
+        }
+      })
+  }
+
   private async cacheMovieYears(
     id: number,
     years: IGetMovie['years'],
@@ -173,6 +188,11 @@ export class MovieService {
       imdbId: payload.imdbId,
       type: payload.type,
       duration: payload.duration,
+      slogan: payload.content.slogan,
+      description: {
+        short: payload.content.shortDescription,
+        default: payload.content.description,
+      },
       poster: {
         preview: payload.posterPreview,
         display: payload.posterDisplay,
@@ -213,12 +233,14 @@ export class MovieService {
       names,
       ratings,
       years,
+      content,
     ] = await Promise.all([
       this.cacheMovieCountries(movieData.id, payload.countries),
       this.cacheMovieGenres(movieData.id, payload.genres),
       this.cacheMovieNames(movieData.id, payload.names),
       this.cacheMovieRatings(movieData.id, payload.votes),
-      this.cacheMovieYears(movieData.id, payload?.years || null)
+      this.cacheMovieYears(movieData.id, payload?.years || null),
+      this.cacheMovieContents(movieData.id, { slogan: payload.slogan, description: payload.description }),
     ])
 
     return this.formatCacheMovieData({
@@ -228,6 +250,7 @@ export class MovieService {
       names,
       ratings,
       years,
+      content
     })
   }
 
@@ -276,6 +299,14 @@ export class MovieService {
       })
   }
 
+  private async getMovieContent(id: number): Promise<TFormatMovie['content']> {
+    return this.db
+      .movieContent
+      .findUnique({
+        where: { id }
+      })
+  }
+
   // Getters
   public async findByKinopoiskId(kinopoiskId: number): Promise<SuccessGetMovie> {
     const watchData = await this.db
@@ -294,12 +325,14 @@ export class MovieService {
       genres,
       ratings,
       years,
+      content
     ] = await Promise.all([
       this.getMovieNames(watchData.id),
       this.getMovieCountries(watchData.id),
       this.getMovieGenres(watchData.id),
       this.getMovieRatings(watchData.id),
       this.getMovieYears(watchData.id),
+      this.getMovieContent(watchData.id),
     ])
 
     return this.formatCacheMovieData({
@@ -309,6 +342,7 @@ export class MovieService {
       genres,
       ratings,
       years,
+      content
     })
   }
 }

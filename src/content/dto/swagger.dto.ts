@@ -240,19 +240,19 @@ export class SuccessGetMovie {
   })
   duration?: number | null
 
-  // @ApiProperty({
-  //   name: 'slogan',
-  //   type: String,
-  //   example: 'Добро пожаловать в реальный мир',
-  // })
-  // slogan: string
-  //
-  // @ApiProperty({
-  //   name: 'description',
-  //   required: true,
-  //   type: MovieDescription,
-  // })
-  // description: MovieDescription
+  @ApiProperty({
+    name: 'slogan',
+    type: String,
+    example: 'Добро пожаловать в реальный мир',
+  })
+  slogan: string
+
+  @ApiProperty({
+    name: 'description',
+    required: true,
+    type: MovieDescription,
+  })
+  description: MovieDescription
 
   @ApiProperty({
     name: 'poster',
