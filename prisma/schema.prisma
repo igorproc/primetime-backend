@@ -7,7 +7,8 @@ datasource data {
   url      = env("DATABASE_URL")
 }
 
-// App Models
+// App
+
 model application {
   appId            Int                 @id @default(autoincrement()) @map("app_id")
   title            String              @unique() @map("title") @data.VarChar(64)
@@ -24,6 +25,8 @@ model application {
   @@index([ownerUid], map: "owner_uid")
   @@map("applications")
 }
+
+// Device
 
 model device {
   id        Int              @id @default(autoincrement()) @map("id")
@@ -42,7 +45,8 @@ model device {
   @@map("devices")
 }
 
-// Users Models
+// Users
+
 model user {
   id          Int        @id @map("id")
   role        user_roles @default(USER_DEFAULT) @map("role")
@@ -52,8 +56,10 @@ model user {
   lastVisited DateTime   @default(now()) @map("last_visited")
   createdAt   DateTime   @default(now()) @map("created_at")
   updatedAt   DateTime   @default(now()) @updatedAt @map("updated_at")
-  device      device[]
-  token       token[]
+
+  // Relations
+  device device[]
+  token  token[]
 
   @@map("users")
 }
@@ -77,7 +83,7 @@ model token {
   @@map("tokens")
 }
 
-// Content
+// Balancers
 
 model dataBalancer {
   id       Int             @id @default(autoincrement()) @map("id")
@@ -113,6 +119,152 @@ model dataBalancerToken {
   @@index([type])
   @@map("data_balancer_tokens")
 }
+
+// Movie
+
+model watchContent {
+  id            Int         @id @default(autoincrement()) @map("id")
+  type          movie_types @map("type")
+  slug          String      @unique @map("slug") @data.VarChar(64)
+  duration      Int?        @map("duration") @data.UnsignedInt
+  kinopoiskId   Int         @unique @map("kinopoisk_id") @data.UnsignedInt
+  imdbId        String?     @unique @map("imdb_id") @data.VarChar(12)
+  posterDisplay String      @map("poster_display") @data.VarChar(256)
+  posterPreview String?     @map("poster_preview") @data.VarChar(256)
+  ageLimits     Int?        @map("age_limits") @data.UnsignedInt
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  years        movieYear?
+  movieGenre   movieGenre[]
+  movieName    movieName[]
+  moviteRating movieRating[]
+  movieCountry movieCountry[]
+
+  // Index
+  @@index([kinopoiskId])
+  @@map("watchs_content")
+}
+
+model movieYear {
+  id    Int  @id
+  year  Int  @map("release_year") @data.UnsignedInt
+  start Int? @map("start_show") @data.UnsignedInt
+  end   Int? @map("end_show") @data.UnsignedInt
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  watchContent watchContent @relation(fields: [id], references: [id])
+
+  // Index
+  @@map("movie_years")
+}
+
+model movieGenre {
+  id      Int    @id @default(autoincrement()) @map("id")
+  watchId Int    @map("watch_id")
+  name    String @map("name") @data.VarChar(32)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  genres       genre        @relation(fields: [name], references: [name], onDelete: Cascade, onUpdate: NoAction)
+  watchContent watchContent @relation(fields: [watchId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  // Index
+  @@map("movie_genres")
+}
+
+model movieName {
+  id      Int     @id @default(autoincrement()) @map("id")
+  watchId Int     @map("watch_id")
+  code    String  @map("code") @data.VarChar(5)
+  name    String? @map("name") @data.VarChar(128)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  watchContent watchContent @relation(fields: [watchId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  // Index
+  @@map("movie_names")
+}
+
+model movieRating {
+  id      Int               @id @default(autoincrement()) @map("id")
+  watchId Int               @map("watch_id")
+  code    movie_votes_codes @map("code")
+  rating  Float?            @map("rating") @data.Float
+  votes   Int?              @map("votes") @data.UnsignedInt
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  watchContent watchContent @relation(fields: [watchId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  // Index
+  @@map("movie_ratings")
+}
+
+model movieCountry {
+  id      Int    @id @default(autoincrement()) @map("id")
+  watchId Int    @map("watch_id")
+  name    String @map("name")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  countries    country      @relation(fields: [name], references: [name], onDelete: Cascade, onUpdate: NoAction)
+  watchContent watchContent @relation(fields: [watchId], references: [id])
+
+  // Index
+  @@map("movie_countries")
+}
+
+// Genres
+
+model genre {
+  id         Int    @id @default(autoincrement()) @map("id")
+  name       String @unique @map("name") @data.VarChar(32)
+  popularity Int    @map("popularity") @data.UnsignedInt
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  movieGenre movieGenre[]
+
+  // Index
+  @@index([name])
+  @@map("genres")
+}
+
+// Countries
+
+model country {
+  id   Int    @id @default(autoincrement()) @map("id")
+  name String @unique @map("name") @data.VarChar(64)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  movieCountry movieCountry[]
+
+  // Index
+  @@index([name])
+  @@map("countries")
+}
+
+// Enums
 
 enum applications_status {
   enabled
@@ -151,4 +303,17 @@ enum balancer_status {
   ONLINE
   OFFLINE
   DEPRECATED
+}
+
+enum movie_types {
+  MOVIE
+  SERIES
+  SHOW
+}
+
+enum movie_votes_codes {
+  KINOPPOISK
+  IMDB
+  CRITICS
+  RU_CRITICS
 }

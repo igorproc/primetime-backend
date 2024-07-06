@@ -13,7 +13,7 @@ export default function(app: INestApplication) {
     .setVersion(VERSION)
     .addBearerAuth({
       type: 'http',
-      in: 'cookie',
+      in: 'head',
     })
     .build()
 

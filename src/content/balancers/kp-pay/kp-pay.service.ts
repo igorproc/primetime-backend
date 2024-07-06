@@ -11,12 +11,14 @@ import {
   type IBalancerService,
   type IGetMovie
 } from '@/content/balancers/balancer.types'
-import { EBalancerMovieType, TBalancerMovie } from '@/content/balancers/kp-pay/kp-pay.types'
+import { type MovieDtoV14 } from '@/content/balancers/kp-pay/kp-pay.types'
 
 @Injectable()
 export class KpPayService implements IBalancerService {
   private readonly axiosInstance: TCreateRequestInstance
   private readonly slugBuilder: TGetSlug<keyof typeof KiniopoiskTgRoutes>
+
+  private readonly movieTypeMap: Record<EMovieTypes, MovieDtoV14['type'][]>
 
   constructor() {
     this.axiosInstance = createRequestInstance({
@@ -24,24 +26,25 @@ export class KpPayService implements IBalancerService {
       secure: { header: 'X-API-KEY' },
     })
     this.slugBuilder = useSlugBuilder(KiniopoiskTgRoutes)
+
+    this.movieTypeMap = {
+      [EMovieTypes.movie]: ['movie', 'cartoon', 'anime'],
+      [EMovieTypes.series]: ['tv-series', 'animated-series', 'series'],
+      [EMovieTypes.show]: ['tv-show'],
+    }
   }
 
-  private formatType(type: TBalancerMovie['type']) {
-    const conditionMap: Record<EMovieTypes, EBalancerMovieType[]> = {
-      [EMovieTypes.movie]: [EBalancerMovieType.movie, EBalancerMovieType.cartoon, EBalancerMovieType.anime],
-      [EMovieTypes.series]: [EBalancerMovieType.series, EBalancerMovieType.animatedSeries],
-      [EMovieTypes.show]: [EBalancerMovieType.show],
-    }
-
-    for (const [key, value] of Object.entries(conditionMap)) {
+  private formatType(type: MovieDtoV14['type']) {
+    for (const [key, value] of Object.entries(this.movieTypeMap)) {
       if (value.includes(type)) {
         return key as EMovieTypes
       }
     }
+
     return null
   }
 
-  private formatMovieNames(names: TBalancerMovie['names']) {
+  private formatMovieNames(names: MovieDtoV14['names']) {
     return names.map(item => {
       if (item.language) {
         return {
@@ -54,8 +57,27 @@ export class KpPayService implements IBalancerService {
     })
   }
 
+  private formatVotes(data: MovieDtoV14) {
+    const map = {
+      kp: 'kp',
+      imdb: 'imdb',
+      critics: 'filmCritics',
+      ruCritics: 'russianFilmCritics',
+    }
+    const votes = {}
+    for (const [key, value] of Object.entries(map)) {
+      if (!data?.rating[value]) {
+        continue
+      }
+
+      votes[key] = { rating: data?.rating[value], votes: Number(data?.votes[value]) || null }
+    }
+
+    return votes
+  }
+
   public async getMovie(token: string, kinopoiskId: number): Promise<IGetMovie> {
-    const data = await this.axiosInstance<TBalancerMovie>(
+    const data = await this.axiosInstance<MovieDtoV14>(
       'GET',
       this.slugBuilder.get('movie', [kinopoiskId]),
       token
@@ -65,14 +87,16 @@ export class KpPayService implements IBalancerService {
       kinopoiskId: data?.id,
       type: this.formatType(data?.type),
       names: this.formatMovieNames(data?.names),
+      duration: data?.movieLength || data?.seriesLength,
+      years: {
+        release: data?.year,
+      },
+      slogan: data?.slogan,
       description: {
         short: data?.shortDescription,
         default: data?.description,
       },
-      rates: {
-        kinopoisk: data?.rating?.kp,
-        imdb: data?.rating?.kp,
-      },
+      votes: this.formatVotes(data),
       poster: {
         preview: data?.poster?.previewUrl,
         display: data?.poster?.url,
@@ -83,10 +107,15 @@ export class KpPayService implements IBalancerService {
       },
       countries: data?.countries
         .filter(item => item?.name)
-        .map(item => item.name),
+        .map(item => item.name.toLowerCase()),
       genres: data?.genres
         .filter(item => item?.name)
-        .map(item => item.name),
+        .map(item => item.name.toLowerCase()),
+    }
+
+    if ([EMovieTypes.series, EMovieTypes.show].includes(formatData.type) && data?.releaseYears[0]) {
+      formatData.years.start = data.releaseYears[0].start
+      formatData.years.end = data.releaseYears[0].end
     }
 
     if (data.externalId?.imdb) {

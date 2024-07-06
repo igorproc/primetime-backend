@@ -7,7 +7,7 @@ import { createRequestInstance, type TCreateRequestInstance } from '@/content/ut
 import { useSlugBuilder, type TGetSlug } from '@/content/utils/slug'
 // Types & Interfaces
 import { EMovieTypes, IBalancerService, IGetMovie } from '@/content/balancers/balancer.types'
-import { EBalancerMovieType, type TBalancerMovie } from '@/content/balancers/kp/kp.types'
+import { type Film } from '@/content/balancers/kp/kp.types'
 
 @Injectable()
 export class KpService implements IBalancerService {
@@ -22,15 +22,11 @@ export class KpService implements IBalancerService {
     this.slugBuilder = useSlugBuilder(KinopoiskUnnoficialRoutes)
   }
 
-  private formatType(type: TBalancerMovie['type']) {
-    const conditionMap: Record<EMovieTypes, EBalancerMovieType[]> = {
-      [EMovieTypes.movie]: [EBalancerMovieType.movie],
-      [EMovieTypes.series]: [
-        EBalancerMovieType.video,
-        EBalancerMovieType.series,
-        EBalancerMovieType.mini_series
-      ],
-      [EMovieTypes.show]: [EBalancerMovieType.show],
+  private formatType(type: Film['type']) {
+    const conditionMap: Record<EMovieTypes, Film['type'][]> = {
+      [EMovieTypes.movie]: ['FILM'],
+      [EMovieTypes.series]: ['VIDEO', 'MINI_SERIES', 'TV_SERIES'],
+      [EMovieTypes.show]: ['TV_SHOW'],
     }
 
     for (const [key, value] of Object.entries(conditionMap)) {
@@ -42,20 +38,25 @@ export class KpService implements IBalancerService {
   }
 
   public async getMovie(token: string, kinopoiskId: number): Promise<IGetMovie> {
-    const data = await this.axiosInstance<TBalancerMovie>(
+    const data = await this.axiosInstance<Film>(
       'GET',
       this.slugBuilder.get('movie', [kinopoiskId]),
       token,
     )
 
-    return {
+    const formatData: IGetMovie = {
       kinopoiskId: data?.kinopoiskId,
       imdbId: data?.imdbId,
       type: this.formatType(data?.type),
+      duration: data?.filmLength,
+      years: {
+        release: data?.year,
+      },
       names: [
-        { name: data.nameRu, language: 'RU' },
-        { name: data.nameEn, language: 'EN' },
+        { name: data?.nameRu, language: 'RU' },
+        { name: data?.nameEn, language: 'EN' },
       ],
+      slogan: data?.slogan,
       description: {
         short: data?.shortDescription,
         default: data?.description,
@@ -68,12 +69,37 @@ export class KpService implements IBalancerService {
         age: Number(data?.ratingAgeLimits.replace('age', '')) || 0,
         mpaa: data?.ratingMpaa,
       },
+      votes: {
+        kp: {
+          rating: data?.ratingKinopoisk,
+          votes: data?.ratingKinopoiskVoteCount,
+        },
+        imdb: {
+          rating: data?.ratingImdb,
+          votes: data?.ratingImdbVoteCount,
+        },
+        critics: {
+          rating: data?.ratingFilmCritics,
+          votes: data?.ratingFilmCriticsVoteCount,
+        },
+        ruCritics: {
+          rating: data?.ratingRfCritics,
+          votes: data?.ratingRfCriticsVoteCount,
+        },
+      },
       countries: data?.countries
         .filter(item => item.country)
-        .map(item => item.country),
+        .map(item => item.country.toLowerCase()),
       genres: data?.genres
         .filter(item => item.genre)
-        .map(item => item.genre)
+        .map(item => item.genre.toLowerCase())
     }
+
+    if ([EMovieTypes.series, EMovieTypes.show].includes(formatData.type)) {
+      formatData.years.start = data?.startYear
+      formatData.years.end = data?.endYear
+    }
+
+    return formatData
   }
 }

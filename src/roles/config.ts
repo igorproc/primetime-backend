@@ -11,7 +11,7 @@ export const AvailableRoles: IStorageRbac = {
   grants: {
     admin: ['&user', 'deviceAdmin', 'dataBalancerAdmin', 'seedOldContent'],
     qa: ['&user', 'dataBalancerAdmin', 'deviceAdmin@all'],
-    user: ['getMovie'],
+    user: ['watchUser'],
   },
   filters: [],
 }

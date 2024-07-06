@@ -10,23 +10,38 @@ import { getJWTPayload } from '@utils/crypt'
 import { AuthErrors } from '@/auth/auth.errors'
 // Types & Interfaces
 import type { Request } from '@/global.types'
-import { IAccessTokenPayload } from '@/auth/auth.types'
-
-enum RoleConditions {
-  'USER_VERIFY'= 'user',
-  'ADMIN' = 'admin',
-}
+import type { IAccessTokenPayload } from '@/auth/auth.types'
+import { user_roles as EUserRoles } from '@prisma/client'
 
 @Injectable()
 export class AuthGuard implements CanActivate {
+  private readonly roleConditionMap: Record<string, IAccessTokenPayload['role'][]>
+
   constructor(
     private readonly db: DbService,
-  ) {}
+  ) {
+    this.roleConditionMap = {
+      'user': [EUserRoles.USER_DEFAULT, EUserRoles.USER_VERIFY],
+      'admin': [EUserRoles.ADMIN, EUserRoles.DEV_VERIFY],
+      'qa': [EUserRoles.QA_DEFAULT, EUserRoles.QA_VERIFY, EUserRoles.DEV_POOL],
+    }
+  }
+
+  private getTokenFromRequest(request: Request) {
+    if (request.cookies['client-id']) {
+      return request.cookies['client-id']
+    }
+
+    if (!request.headers.authorization) {
+      throw new UnauthorizedException(AuthErrors.LOGOUT)
+    }
+    return request.headers.authorization
+  }
 
   private checkAccessToken(token = ''): boolean {
     try {
       if (!isJWT(token)) {
-        throw new Error('Is not a JWT!')
+        throw Error('Is not a JWT!')
       }
 
       return true
@@ -35,20 +50,23 @@ export class AuthGuard implements CanActivate {
     }
   }
 
+  private getRoleFromMap(role: IAccessTokenPayload['role']): string | null {
+    for (const [key, value] of Object.entries(this.roleConditionMap)) {
+      if (value.includes(role)) {
+        return key
+      }
+    }
+
+    return null
+  }
+
   async canActivate(
     context: ExecutionContext
   ): Promise<boolean> {
     const request: Request = context.switchToHttp().getRequest()
-    let token = request.cookies.Authorization
-
-    if (!token) {
-      if (!request.headers.authorization) {
-        throw new UnauthorizedException(AuthErrors.LOGOUT)
-      }
-
-      token = request.headers.authorization
-    }
-    token = token.replace('Bearer ', '')
+    const token = this
+      .getTokenFromRequest(request)
+      .replace('Bearer ', '')
     this.checkAccessToken(token)
 
     const currentDate = getCurrentDate()
@@ -57,6 +75,7 @@ export class AuthGuard implements CanActivate {
       .token
       .findFirst({
         where: { accessToken: token },
+        select: { revoked: true, expiresAt: true }
       })
 
     if (!tokenData ||
@@ -69,7 +88,7 @@ export class AuthGuard implements CanActivate {
     context
       .switchToHttp()
       .getRequest()
-      .user = { role: RoleConditions[tokenPayload.role] }
+      .user = { role: this.getRoleFromMap(tokenPayload.role) }
     return true
   }
 }
