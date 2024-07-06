@@ -10,16 +10,15 @@ export const getDataFromJson = <T>(relativePath: string): T | null => {
       return null
     }
 
-    return JSON.parse(fileData) as T;
+    return JSON.parse(fileData) as T
   } catch (error) {
-    console.error(`Json file read error: ${absolutePath}`)
-
     if (error.code === 'ENOENT') {
-      console.error('File not found!')
-    } else if (error.code === 'EACCES') {
-      console.error('Permission denied!')
-    } else {
-      throw error
+      throw Error('[Utils/data] File not found!')
     }
+    if (error.code === 'EACCES') {
+      throw Error('[Utils/data] Permission denied!')
+    }
+
+    throw Error(`[Utils/data] Json file read error: ${absolutePath}`)
   }
 }

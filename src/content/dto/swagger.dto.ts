@@ -5,8 +5,8 @@ import {
   balancer_code as EBalancerCodes,
   balancer_status as EBalancerStatus,
   movie_votes_codes as EMovieVoteCodes,
+  movie_types as EMovieTypes,
 } from '@prisma/client'
-import { EMovieTypes } from '@/content/balancers/balancer.types'
 
 export class SuccessChangeContentBalancer {
   @ApiProperty({
@@ -98,7 +98,8 @@ export class SuccessGetContentBalancerList {
 class MovieDescription {
   @ApiProperty({
     name: 'short',
-    type: [String, null],
+    nullable: true,
+    type: String,
     example: 'Гангстер идет на терапию, чтобы разобраться в себе. ' +
       'Сериал HBO, с которого началась золотая эра телевидения',
   })
@@ -106,7 +107,8 @@ class MovieDescription {
 
   @ApiProperty({
     name: 'default',
-    type: [String, null],
+    nullable: true,
+    type: String,
     example: 'Мафиозный босс Северного Джерси Тони Сопрано эффективно решает ' +
       'проблемы «семьи». Но с собственной роднёй ситуация сложнее: дети от рук ' +
       'отбились, брак под угрозой, в отношениях с пожилой матерью сплошное ' +
@@ -126,14 +128,16 @@ class MovieYear {
 
   @ApiProperty({
     name: 'start',
-    type: [Number, null],
+    nullable: true,
+    type: Number,
     example: 2011,
   })
   start?: number | null
 
   @ApiProperty({
     name: 'end',
-    type: [Number, null],
+    nullable: true,
+    type: Number,
     example: 2019,
   })
   end?: number | null
@@ -150,14 +154,16 @@ class MovieRating {
 
   @ApiProperty({
     name: 'rating',
-    type: [Number, null],
+    nullable: true,
+    type: Number,
     example: 8.826,
   })
   rating?: number | null
 
   @ApiProperty({
     name: 'votes',
-    type: [Number, null],
+    nullable: true,
+    type: Number,
     example: 2098709,
   })
   votes?: number | null
@@ -166,7 +172,8 @@ class MovieRating {
 class MovieName {
   @ApiProperty({
     name: 'name',
-    type: [String, null],
+    nullable: true,
+    type: String,
     example: '1+1'
   })
   name?: string | null
@@ -182,7 +189,8 @@ class MovieName {
 class MoviePoster {
   @ApiProperty({
     name: 'preview',
-    type: [String, null],
+    nullable: true,
+    type: String,
     example: 'https://image.openmoviedb.com/kinopoisk-images/1946459' +
       '/bf93b465-1189-4155-9dd1-cb9fb5cb1bb5/x1000',
   })
@@ -208,7 +216,8 @@ export class SuccessGetMovie {
 
   @ApiProperty({
     name: 'imdbId',
-    type: [String, null],
+    nullable: true,
+    type: String,
     required: false,
     example: 'tt0141842'
   })
@@ -216,32 +225,34 @@ export class SuccessGetMovie {
 
   @ApiProperty({
     name: 'type',
-    type: [String, null],
+    nullable: true,
+    type: String,
     enum: EMovieTypes,
-    example: EMovieTypes.movie,
+    example: EMovieTypes.MOVIE,
   })
   type: EMovieTypes | null
 
   @ApiProperty({
     name: 'duration',
-    type: [Number, null],
+    nullable: true,
+    type: Number,
     example: 120,
   })
   duration?: number | null
 
-  @ApiProperty({
-    name: 'slogan',
-    type: String,
-    example: 'Добро пожаловать в реальный мир',
-  })
-  slogan: string
-
-  @ApiProperty({
-    name: 'description',
-    required: true,
-    type: MovieDescription,
-  })
-  description: MovieDescription
+  // @ApiProperty({
+  //   name: 'slogan',
+  //   type: String,
+  //   example: 'Добро пожаловать в реальный мир',
+  // })
+  // slogan: string
+  //
+  // @ApiProperty({
+  //   name: 'description',
+  //   required: true,
+  //   type: MovieDescription,
+  // })
+  // description: MovieDescription
 
   @ApiProperty({
     name: 'poster',
@@ -251,7 +262,8 @@ export class SuccessGetMovie {
 
   @ApiProperty({
     name: 'ageLimits',
-    type: [Number, null],
+    nullable: true,
+    type: Number,
     example: 18,
   })
   ageLimits?: number | null
@@ -264,7 +276,8 @@ export class SuccessGetMovie {
 
   @ApiProperty({
     name: 'genres',
-    type: [() => [String], null],
+    nullable: true,
+    type: () => [String],
     example: ['драма', 'комедия'],
   })
   genres?: string[] | null
@@ -281,7 +294,7 @@ export class SuccessGetMovie {
     name: 'votes',
     type: () => [MovieRating],
   })
-  votes: MovieRating
+  votes: MovieRating[]
 
   @ApiProperty({
     name: 'years',

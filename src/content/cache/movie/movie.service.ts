@@ -34,12 +34,20 @@ type TFormatMovie = {
 @Injectable()
 export class MovieService {
   private readonly NAME_REGEXP = /[+^*_]/gi
+  private readonly votesConditionMap: Record<EMovieVotes, EMovieVoteCodes>
 
   constructor(
     private readonly db: DbService,
     private readonly country: CountryService,
     private readonly genre: GenresService,
-  ) {}
+  ) {
+    this.votesConditionMap = {
+      [EMovieVotes.kp]: EMovieVoteCodes.KINOPPOISK,
+      [EMovieVotes.imdb]: EMovieVoteCodes.IMDB,
+      [EMovieVotes.critics]: EMovieVoteCodes.CRITICS,
+      [EMovieVotes.ruCritics]: EMovieVoteCodes.RU_CRITICS,
+    }
+  }
 
   // Utils
   private generateSlug(kinopoiskId: number, names: IGetMovie['names']) {
@@ -108,12 +116,6 @@ export class MovieService {
 
   private async cacheMovieRatings(id: number, rates: IGetMovie['votes']) {
     const votes = []
-    const codeConditionMap = {
-      [EMovieVotes.kp]: EMovieVoteCodes.KINOPPOISK,
-      [EMovieVotes.imdb]: EMovieVoteCodes.IMDB,
-      [EMovieVotes.critics]: EMovieVoteCodes.CRITICS,
-      [EMovieVotes.ruCritics]: EMovieVoteCodes.RU_CRITICS,
-    }
 
     for (const [code, rate] of Object.entries(rates)) {
       const data = await this.db
@@ -121,7 +123,7 @@ export class MovieService {
         .create({
           data: {
             watchId: id,
-            code: codeConditionMap[code],
+            code: this.votesConditionMap[code],
             votes: rate.votes,
             rating: rate.rating
           }
@@ -157,6 +159,7 @@ export class MovieService {
           votes: item.votes,
         }
       })
+
     const formatedNames = payload.names
       .map(item => {
         return {
@@ -165,10 +168,10 @@ export class MovieService {
         }
       })
 
-    const data: SuccessGetMovie = {
+    return {
       kinopoiskId: payload.kinopoiskId,
       imdbId: payload.imdbId,
-      // type: payload.type,
+      type: payload.type,
       duration: payload.duration,
       poster: {
         preview: payload.posterPreview,
@@ -228,8 +231,53 @@ export class MovieService {
     })
   }
 
+  // Getters Helpers
+  private async getMovieNames(id: number): Promise<TFormatMovie['names']> {
+    return this.db
+      .movieName
+      .findMany({
+        where: { watchId: id }
+      })
+  }
+
+  private async getMovieCountries(id: number): Promise<TFormatMovie['countries']> {
+    const data = await this.db
+        .movieCountry
+        .findMany({
+          where: { watchId: id }
+        })
+
+    return data.map(item => item.name)
+  }
+
+  private async getMovieGenres(id: number): Promise<TFormatMovie['genres']> {
+    const data = await this.db
+        .movieGenre
+        .findMany({
+          where: { watchId: id }
+        })
+
+    return data.map(genre => genre.name)
+  }
+
+  private async getMovieRatings(id: number): Promise<TFormatMovie['ratings']> {
+    return this.db
+      .movieRating
+      .findMany({
+        where: { watchId: id },
+      })
+  }
+
+  private async getMovieYears(id: number): Promise<TFormatMovie['years']> {
+    return this.db
+      .movieYear
+      .findUnique({
+        where: { id }
+      })
+  }
+
   // Getters
-  public async findByKinopoiskId(kinopoiskId: number) {
+  public async findByKinopoiskId(kinopoiskId: number): Promise<SuccessGetMovie> {
     const watchData = await this.db
       .watchContent
       .findUnique({
@@ -240,5 +288,27 @@ export class MovieService {
       return null
     }
 
+    const [
+      names,
+      countries,
+      genres,
+      ratings,
+      years,
+    ] = await Promise.all([
+      this.getMovieNames(watchData.id),
+      this.getMovieCountries(watchData.id),
+      this.getMovieGenres(watchData.id),
+      this.getMovieRatings(watchData.id),
+      this.getMovieYears(watchData.id),
+    ])
+
+    return this.formatCacheMovieData({
+      ...watchData,
+      names,
+      countries,
+      genres,
+      ratings,
+      years,
+    })
   }
 }

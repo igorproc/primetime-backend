@@ -18,26 +18,29 @@ export class KpPayService implements IBalancerService {
   private readonly axiosInstance: TCreateRequestInstance
   private readonly slugBuilder: TGetSlug<keyof typeof KiniopoiskTgRoutes>
 
+  private readonly movieTypeMap: Record<EMovieTypes, MovieDtoV14['type'][]>
+
   constructor() {
     this.axiosInstance = createRequestInstance({
       apiUrl: 'https://api.kinopoisk.dev/',
       secure: { header: 'X-API-KEY' },
     })
     this.slugBuilder = useSlugBuilder(KiniopoiskTgRoutes)
+
+    this.movieTypeMap = {
+      [EMovieTypes.movie]: ['movie', 'cartoon', 'anime'],
+      [EMovieTypes.series]: ['tv-series', 'animated-series', 'series'],
+      [EMovieTypes.show]: ['tv-show'],
+    }
   }
 
   private formatType(type: MovieDtoV14['type']) {
-    const conditionMap: Record<EMovieTypes, MovieDtoV14['type'][]> = {
-      [EMovieTypes.movie]: ['movie', 'cartoon', 'anime'],
-      [EMovieTypes.series]: ['animated-series', 'series'],
-      [EMovieTypes.show]: ['tv-show'],
-    }
-
-    for (const [key, value] of Object.entries(conditionMap)) {
+    for (const [key, value] of Object.entries(this.movieTypeMap)) {
       if (value.includes(type)) {
         return key as EMovieTypes
       }
     }
+
     return null
   }
 
@@ -54,6 +57,25 @@ export class KpPayService implements IBalancerService {
     })
   }
 
+  private formatVotes(data: MovieDtoV14) {
+    const map = {
+      kp: 'kp',
+      imdb: 'imdb',
+      critics: 'filmCritics',
+      ruCritics: 'russianFilmCritics',
+    }
+    const votes = {}
+    for (const [key, value] of Object.entries(map)) {
+      if (!data?.rating[value]) {
+        continue
+      }
+
+      votes[key] = { rating: data?.rating[value], votes: Number(data?.votes[value]) || null }
+    }
+
+    return votes
+  }
+
   public async getMovie(token: string, kinopoiskId: number): Promise<IGetMovie> {
     const data = await this.axiosInstance<MovieDtoV14>(
       'GET',
@@ -65,7 +87,7 @@ export class KpPayService implements IBalancerService {
       kinopoiskId: data?.id,
       type: this.formatType(data?.type),
       names: this.formatMovieNames(data?.names),
-      duration: data?.movieLength,
+      duration: data?.movieLength || data?.seriesLength,
       years: {
         release: data?.year,
       },
@@ -74,12 +96,7 @@ export class KpPayService implements IBalancerService {
         short: data?.shortDescription,
         default: data?.description,
       },
-      votes: {
-        kp: { rating: data?.rating?.kp, votes: Number(data?.votes?.kp) },
-        imdb: { rating: data?.rating?.imdb, votes: data?.votes?.imdb },
-        critics: { rating: data?.rating?.filmCritics, votes: data?.votes?.filmCritics },
-        ruCritics: { rating: data?.rating?.russianFilmCritics, votes: data?.votes?.russianFilmCritics }
-      },
+      votes: this.formatVotes(data),
       poster: {
         preview: data?.poster?.previewUrl,
         display: data?.poster?.url,

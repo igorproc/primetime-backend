@@ -20,7 +20,7 @@ interface IMovieVote {
   votes: number | null,
 }
 
-type TMovieVote = { [key in keyof typeof EMovieVotes]: IMovieVote }
+type TMovieVote = Partial<{ [key in keyof typeof EMovieVotes]: IMovieVote }>
 
 interface IMovieName {
   name: string,
