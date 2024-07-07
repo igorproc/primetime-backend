@@ -10,11 +10,11 @@ export function IsActivationKey(validationOptions?: ValidationOptions) {
       options: validationOptions,
       validator: {
         validate(value: any) {
-          const regex = /([0-9a-zA-Z]{5,13}-){1,3}[0-9a-zA-Z]{5,13}/gm
+          const regex = /([0-9a-zA-Z]{3,13}-){1,3}[0-9a-zA-Z]{3,13}/gm
           return regex.test(value)
         },
         defaultMessage(args: ValidationArguments) {
-          return `${args.targetName} Invalid activation key format`
+          return `${args.property} Invalid activation key format`
         }
       }
     })

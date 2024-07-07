@@ -21,7 +21,7 @@ import {
 // Errors
 import { ContentErrors } from '@/content/content.errors'
 
-@ApiTags('Content Balancers')
+@ApiTags('Content Balancers', 'admin')
 @Controller('api/balancer')
 export class BalancerController {
   constructor(

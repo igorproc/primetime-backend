@@ -11,7 +11,7 @@ import {
   type IBalancerService,
   type IGetMovie
 } from '@/content/balancers/balancer.types'
-import { type MovieDtoV14 } from '@/content/balancers/kp-pay/kp-pay.types'
+import { type MovieDtoV14 } from '@@/.types/content-balancer/kp-pay'
 
 @Injectable()
 export class KpPayService implements IBalancerService {

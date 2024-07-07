@@ -1,6 +1,6 @@
 export function translateRuSentence(sentence: string) {
   const alphabet: Record<string, string> = {
-    ' ': ' ',
+    ' ': '-',
     'а': 'a',
     'б': 'b',
     'в': 'v',

@@ -7,12 +7,14 @@ import { createRequestInstance, type TCreateRequestInstance } from '@/content/ut
 import { useSlugBuilder, type TGetSlug } from '@/content/utils/slug'
 // Types & Interfaces
 import { EMovieTypes, IBalancerService, IGetMovie } from '@/content/balancers/balancer.types'
-import { type Film } from '@/content/balancers/kp/kp.types'
+import { type Film } from '@@/.types/content-balancer/kp'
 
 @Injectable()
 export class KpService implements IBalancerService {
   private readonly axiosInstance: TCreateRequestInstance
   private readonly slugBuilder: TGetSlug<keyof typeof KinopoiskUnnoficialRoutes>
+
+  private readonly movieTypeConditionMap: Record<EMovieTypes, Film['type'][]>
 
   constructor() {
     this.axiosInstance = createRequestInstance({
@@ -20,16 +22,16 @@ export class KpService implements IBalancerService {
       secure: { header: 'X-API-KEY' },
     })
     this.slugBuilder = useSlugBuilder(KinopoiskUnnoficialRoutes)
-  }
 
-  private formatType(type: Film['type']) {
-    const conditionMap: Record<EMovieTypes, Film['type'][]> = {
+    this.movieTypeConditionMap = {
       [EMovieTypes.movie]: ['FILM'],
       [EMovieTypes.series]: ['VIDEO', 'MINI_SERIES', 'TV_SERIES'],
       [EMovieTypes.show]: ['TV_SHOW'],
     }
+  }
 
-    for (const [key, value] of Object.entries(conditionMap)) {
+  private formatType(type: Film['type']) {
+    for (const [key, value] of Object.entries(this.movieTypeConditionMap)) {
       if (value.includes(type)) {
         return key as EMovieTypes
       }
@@ -37,69 +39,84 @@ export class KpService implements IBalancerService {
     return null
   }
 
+  private formatNames(data: Pick<Film, 'nameRu' | 'nameEn'>) {
+    const localesConditionMap = { 'RU': 'nameRu', 'EN': 'nameEn' }
+    const names = []
+
+    for (const [key, value] of Object.entries(localesConditionMap)) {
+      if (!data[value]) {
+        continue
+      }
+
+      names.push({ name: data[value], language: key })
+    }
+    return names
+  }
+
   public async getMovie(token: string, kinopoiskId: number): Promise<IGetMovie> {
-    const data = await this.axiosInstance<Film>(
-      'GET',
-      this.slugBuilder.get('movie', [kinopoiskId]),
-      token,
-    )
+    try {
+      const data = await this.axiosInstance<Film>(
+        'GET',
+        this.slugBuilder.get('movie', [kinopoiskId]),
+        token,
+      )
 
-    const formatData: IGetMovie = {
-      kinopoiskId: data?.kinopoiskId,
-      imdbId: data?.imdbId,
-      type: this.formatType(data?.type),
-      duration: data?.filmLength,
-      years: {
-        release: data?.year,
-      },
-      names: [
-        { name: data?.nameRu, language: 'RU' },
-        { name: data?.nameEn, language: 'EN' },
-      ],
-      slogan: data?.slogan,
-      description: {
-        short: data?.shortDescription,
-        default: data?.description,
-      },
-      poster: {
-        preview: data?.posterUrlPreview,
-        display: data?.posterUrl,
-      },
-      rating: {
-        age: Number(data?.ratingAgeLimits.replace('age', '')) || 0,
-        mpaa: data?.ratingMpaa,
-      },
-      votes: {
-        kp: {
-          rating: data?.ratingKinopoisk,
-          votes: data?.ratingKinopoiskVoteCount,
+      const formatData: IGetMovie = {
+        kinopoiskId: data?.kinopoiskId,
+        imdbId: data?.imdbId,
+        type: this.formatType(data?.type),
+        duration: data?.filmLength,
+        years: {
+          release: data?.year,
         },
-        imdb: {
-          rating: data?.ratingImdb,
-          votes: data?.ratingImdbVoteCount,
+        names: this.formatNames({ nameRu: data?.nameRu, nameEn: data?.nameEn }),
+        slogan: data?.slogan,
+        description: {
+          short: data?.shortDescription,
+          default: data?.description,
         },
-        critics: {
-          rating: data?.ratingFilmCritics,
-          votes: data?.ratingFilmCriticsVoteCount,
+        poster: {
+          preview: data?.posterUrlPreview,
+          display: data?.posterUrl,
         },
-        ruCritics: {
-          rating: data?.ratingRfCritics,
-          votes: data?.ratingRfCriticsVoteCount,
+        rating: {
+          age: Number(data?.ratingAgeLimits.replace('age', '')) || 0,
+          mpaa: data?.ratingMpaa,
         },
-      },
-      countries: data?.countries
-        .filter(item => item.country)
-        .map(item => item.country.toLowerCase()),
-      genres: data?.genres
-        .filter(item => item.genre)
-        .map(item => item.genre.toLowerCase())
+        votes: {
+          kp: {
+            rating: data?.ratingKinopoisk,
+            votes: data?.ratingKinopoiskVoteCount,
+          },
+          imdb: {
+            rating: data?.ratingImdb,
+            votes: data?.ratingImdbVoteCount,
+          },
+          critics: {
+            rating: data?.ratingFilmCritics,
+            votes: data?.ratingFilmCriticsVoteCount,
+          },
+          ruCritics: {
+            rating: data?.ratingRfCritics,
+            votes: data?.ratingRfCriticsVoteCount,
+          },
+        },
+        countries: data?.countries
+          .filter(item => item.country)
+          .map(item => item.country.toLowerCase()),
+        genres: data?.genres
+          .filter(item => item.genre)
+          .map(item => item.genre.toLowerCase())
+      }
+
+      if ([EMovieTypes.series, EMovieTypes.show].includes(formatData.type)) {
+        formatData.years.start = data?.startYear
+        formatData.years.end = data?.endYear
+      }
+
+      return formatData
+    } catch (error) {
+      throw error
     }
-
-    if ([EMovieTypes.series, EMovieTypes.show].includes(formatData.type)) {
-      formatData.years.start = data?.startYear
-      formatData.years.end = data?.endYear
-    }
-
-    return formatData
   }
 }

@@ -187,11 +187,11 @@ export class MovieService {
       kinopoiskId: payload.kinopoiskId,
       imdbId: payload.imdbId,
       type: payload.type,
-      duration: payload.duration,
-      slogan: payload.content.slogan,
+      duration: payload?.duration,
+      slogan: payload.content?.slogan,
       description: {
-        short: payload.content.shortDescription,
-        default: payload.content.description,
+        short: payload.content?.shortDescription,
+        default: payload.content?.description,
       },
       poster: {
         preview: payload.posterPreview,

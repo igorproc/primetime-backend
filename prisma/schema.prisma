@@ -232,9 +232,9 @@ model movieCountry {
 
 model movieContent {
   id               Int     @id @map("id")
-  slogan           String? @data.VarChar(256)
-  shortDescription String? @map("short_description") @data.VarChar(512)
-  description      String? @map("description") @data.VarChar(512)
+  slogan           String? @map("slogan") @data.Text
+  shortDescription String? @map("short_description") @data.Text
+  description      String? @map("description") @data.Text
 
   // Relations
   watchContent watchContent @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)

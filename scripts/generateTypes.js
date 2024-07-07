@@ -1,12 +1,33 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var child_process_1 = require("child_process");
-function generateSwaggerTypes(typeName) {
-    var outputPath = "dist/".concat(typeName);
-    var command = "\n    npx swagger-typescript-api       -p https://kinopoiskapiunofficial.tech/documentation/api/openapi.json       -o ".concat(outputPath, " -n ").concat(typeName, ".d.ts\n  ");
-    (0, child_process_1.execSync)(command, { stdio: 'inherit' });
+const {execSync} = require('child_process')
+
+const types = [
+    {
+        group: 'content-balancer',
+        name: 'kp',
+        link: 'https://kinopoiskapiunofficial.tech/documentation/api/openapi.json',
+    },
+    {
+        group: 'content-balancer',
+        name: 'kp-pay',
+        link: 'https://api.kinopoisk.dev/documentation-json'
+    }
+]
+
+function generateSwaggerTypes(data) {
+  try {
+    const outputPath = `.types/${data.group}`
+    const fileName = `${data.name}.d.ts`
+    const command = `swagger-typescript-api -p ${data.link} -o ${outputPath} -n ${fileName}`
+
+    execSync(command)
+    console.log(`generate group: ${data.group}, name: ${fileName}`)
+  } catch (error) {
+    throw error
+  }
 }
-module.exports = {
-    generateKPTypes: function () { return generateSwaggerTypes('kp'); },
-    generateKPPayTypes: function () { return generateSwaggerTypes('kp-pay'); }
-};
+
+(async () => {
+  console.log('[types:generate], start  generate types')
+  types.forEach(type => generateSwaggerTypes(type))
+  console.log('[types:generate], types generate successfully')
+})()

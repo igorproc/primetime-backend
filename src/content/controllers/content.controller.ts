@@ -30,6 +30,7 @@ export class ContentController {
   @RBAcPermissions('watchUser@getMovie')
   @UseGuards(AuthGuard, RBAcGuard)
   @Get('movie/:id')
+  @ApiTags('user')
   @ApiOperation({ description: 'Get movie by kinopoisk id' })
   @ApiBearerAuth()
   @ApiOkResponse({ type: SuccessGetMovie })
