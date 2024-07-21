@@ -55,11 +55,9 @@ export class MovieService {
   private generateSlug(kinopoiskId: number, names: IGetMovie['names']) {
     let name = names.find(item => item.language === 'EN')?.name
     if (!name) {
-      const translatedName = translateRuSentence(
+      name = translateRuSentence(
         names.find(item => item.language === 'RU')?.name
       )
-
-      name = translatedName || kinopoiskId.toString()
     }
     name = name.toLowerCase()
 

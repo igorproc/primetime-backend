@@ -40,10 +40,7 @@ export class MysqlService implements OnModuleInit, OnModuleDestroy {
       return await this.pool.execute(query, params) as T
     } catch (error) {
       console.error(error)
-      throw new HttpException(
-        '[Mysql] Connect db Error',
-        HttpStatus.INTERNAL_SERVER_ERROR
-      )
+      throw new HttpException('[Mysql] Connect db Error', HttpStatus.INTERNAL_SERVER_ERROR)
     }
   }
 }

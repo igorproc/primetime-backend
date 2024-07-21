@@ -7,7 +7,6 @@ import { KpService } from '@/content/balancers/kp/kp.service'
 import { MovieService } from '@/content/cache/movie/movie.service'
 // Utils
 import { getPageDataSize } from '@utils/generate'
-import { asyncWhile } from '@/content/utils/loop'
 // Validators
 import {
   AddBalancerTokenInputSchema,
@@ -23,7 +22,7 @@ import {
 } from '@/content/dto/swagger.dto'
 // Types & Interfaces
 import { balancer_code as EBalancerCodes } from '@prisma/client'
-import {MigrationsService} from '@/content/migrations/migrations.service'
+
 
 type TBalancer = (KpPayService | KpService)
 type TAvailableBalancers = { [key in EBalancerCodes]: TBalancer }
@@ -32,6 +31,7 @@ type TTokensIds = { [key in EBalancerCodes]: number }
 @Injectable()
 export class ContentService {
   private readonly availableServices: TAvailableBalancers
+
   private readonly DEFAULT_PAGE_SIZE: number
   private readonly tokensIds: TTokensIds
 
@@ -40,7 +40,6 @@ export class ContentService {
     private readonly kpPay: KpPayService,
     private readonly kp: KpService,
     private readonly movie: MovieService,
-    private readonly migrations: MigrationsService,
   ) {
     this.availableServices = { KP: this.kp, KP_TG_KEY: this.kpPay }
     this.tokensIds = { KP: 0, KP_TG_KEY: 0 }
@@ -223,28 +222,5 @@ export class ContentService {
     const balancerData = await balancer.service.getMovie(token, kinopoiskId)
 
     return this.movie.cacheMovie(balancerData)
-  }
-
-  public async migrateMovies() {
-    let currentIndex = 0
-    const totalRecords = await this.migrations.getRecordsCount('movie')
-
-    const action = async () => {
-      const promiseList = []
-      const kpIds = await this.migrations.getMoviesIds(currentIndex)
-      kpIds.forEach(item => {
-        promiseList.push(this.getMovie(item))
-      })
-
-      await Promise.all(promiseList)
-      currentIndex += 10
-    }
-
-    await asyncWhile(totalRecords > currentIndex, action)
-
-    return {
-      q: await this.migrations.getRecordsCount('movie'),
-      w: await this.migrations.getMoviesIds(0),
-    }
   }
 }

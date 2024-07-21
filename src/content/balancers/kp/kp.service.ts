@@ -80,7 +80,7 @@ export class KpService implements IBalancerService {
           display: data?.posterUrl,
         },
         rating: {
-          age: Number(data?.ratingAgeLimits.replace('age', '')) || 0,
+          age: Number(data?.ratingAgeLimits?.replace('age', '')) || 0,
           mpaa: data?.ratingMpaa,
         },
         votes: {

@@ -11,8 +11,6 @@ import { KpPayModule } from '@/content/balancers/kp-pay/kp-pay.module'
 import { KpModule } from '@/content/balancers/kp/kp.module'
 import { ContentController } from '@/content/controllers/content.controller'
 import { MovieModule } from '@/content/cache/movie/movie.module'
-import { MigrationsModule } from './migrations/migrations.module';
-import { MigrationsController } from './controllers/migrations.controller';
 
 @Module({
   imports: [
@@ -21,12 +19,10 @@ import { MigrationsController } from './controllers/migrations.controller';
     KpPayModule,
     KpModule,
     MovieModule,
-    MigrationsModule
   ],
   controllers: [
     BalancerController,
     ContentController,
-    MigrationsController
   ],
   providers: [ContentService],
   exports: [ContentService]

@@ -125,7 +125,7 @@ model dataBalancerToken {
 model watchContent {
   id            Int         @id @default(autoincrement()) @map("id")
   type          movie_types @map("type")
-  slug          String      @unique @map("slug") @data.VarChar(64)
+  slug          String      @unique @map("slug") @data.VarChar(128)
   duration      Int?        @map("duration") @data.UnsignedInt
   kinopoiskId   Int         @unique @map("kinopoisk_id") @data.UnsignedInt
   imdbId        String?     @unique @map("imdb_id") @data.VarChar(12)

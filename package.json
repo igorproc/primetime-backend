@@ -22,6 +22,7 @@
     "make:migration": "prisma format && prisma validate && prisma migrate dev --create-only"
   },
   "dependencies": {
+    "@nestjs/bull": "^10.1.1",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.2.2",
     "@nestjs/core": "^10.0.0",
@@ -55,6 +56,7 @@
     "@typescript-eslint/parser": "^6.0.0",
     "axios": "^1.7.2",
     "bcrypt": "^5.1.1",
+    "bull": "^4.15.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "crypto": "^1.0.1",
