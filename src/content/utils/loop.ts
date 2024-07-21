@@ -1,15 +1,28 @@
-export async function asyncWhile(condition: boolean, action: () => Promise<void>, delay?: number): Promise<void> {
-  if (!condition) {
-    return
-  }
+export async function asyncWhile(conditionFn: () => boolean, action: () => Promise<void>, delay?: number): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const loop = () => {
+      try {
+        if (!conditionFn()) {
+          resolve()
+          return
+        }
 
-  await action()
-  if (!delay) {
-    return asyncWhile(condition, action)
-  }
+        action()
+          .then(() => {
+            if (!delay) {
+              loop()
+            }
 
-  const timeout = setTimeout(() => {
-    clearTimeout(timeout)
-    return asyncWhile(condition, action)
-  }, delay)
+            const timer = setTimeout(() => {
+              clearTimeout(timer)
+              loop()
+            }, delay)
+          })
+      } catch (error) {
+        reject(error)
+      }
+    }
+
+    loop()
+  })
 }

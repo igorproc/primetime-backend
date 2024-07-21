@@ -5,8 +5,6 @@ import { Job } from 'bull'
 // Other services
 import { MigrationsService } from '@/migrations/migrations.service'
 import { ContentService } from '@/content/content.service'
-// Validators
-import { StartMigrationInputSchema } from '@/migrations/dto/validate.dto'
 // Types & Interfaces
 import { TMigrationTaskPayload } from '@/migrations/migrations.service'
 import { asyncWhile } from '@/content/utils/loop'
@@ -22,42 +20,26 @@ export class MigrationsConsumer {
     private readonly content: ContentService,
   ) {
     this.logger = new Logger(MigrationsConsumer.name)
-    this.MIGRATION_STEP = 30
+    this.MIGRATION_STEP = 15
   }
 
   private async migrateMovies(job: Job<TMigrationTaskPayload>) {
-    const waitFor = (delay: number) => new Promise(resolve => {
-      const timer = setTimeout(() => {
-        clearTimeout(timer)
-        resolve(true)
-      }, delay)
-    })
+    let currentIndex = 0
 
     const totalRecords = await this.migrations.getRecordsCount('movie')
-    const action = async (currentIndex: number) => {
+    const condition = () => totalRecords > currentIndex
+    const action = async () => {
       const ids = await this.migrations.getMoviesIds(currentIndex, this.MIGRATION_STEP)
-      const promiseChain = []
-
-      ids.forEach(id => {
-        promiseChain.push(
-          this.content.getMovie(id)
-        )
-      })
-
-      try {
-        await Promise.allSettled(promiseChain)
-        await waitFor(100)
-      } catch (error) {
-        this.logger.fatal(error)
+      for (const id of ids) {
+        await this.content.getMovie(id)
       }
 
       const jobProgress = ((currentIndex / totalRecords) * 100).toFixed()
       await job.progress(jobProgress)
+      currentIndex += this.MIGRATION_STEP
     }
 
-    for (let currentIndex = 0; totalRecords > currentIndex; currentIndex += this.MIGRATION_STEP) {
-      await action(currentIndex)
-    }
+    await asyncWhile(condition, action, 100)
   }
 
   @Process()

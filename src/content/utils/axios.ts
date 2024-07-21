@@ -1,3 +1,5 @@
+// Node Deps
+import { Logger } from '@nestjs/common'
 import axios, { AxiosHeaders, AxiosInstance, Method } from 'axios'
 
 type InstancePayload = {
@@ -13,6 +15,7 @@ export type TCreateRequestInstance =  <T>(method: Method, slug: string, data: un
 
 export function createRequestInstance(payload: InstancePayload) {
   let axiosInstance: AxiosInstance | null = null
+  const logger: Logger = new Logger('axiosInstance')
 
   const createInstance = () => {
     const instance = axios.create()
@@ -20,9 +23,10 @@ export function createRequestInstance(payload: InstancePayload) {
     instance.defaults.baseURL = payload.apiUrl
     instance.defaults.withCredentials = true
     instance.defaults.headers['Content-Type'] = 'application/json'
+
     return instance
   }
-  createInstance()
+  axiosInstance = createInstance()
 
   return async <T>(method: Method, slug: string, secureKey?: string, data?: unknown): Promise<T> => {
     if (!axiosInstance) {
@@ -44,7 +48,7 @@ export function createRequestInstance(payload: InstancePayload) {
 
       return response.data
     } catch (error) {
-      throw error
+      logger.warn(`Fetch error with data: ${JSON.stringify(error?.response?.data)}`)
     }
   }
 }

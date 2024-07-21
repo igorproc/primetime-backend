@@ -55,9 +55,9 @@ export class MovieService {
   private generateSlug(kinopoiskId: number, names: IGetMovie['names']) {
     let name = names.find(item => item.language === 'EN')?.name
     if (!name) {
-      name = translateRuSentence(
-        names.find(item => item.language === 'RU')?.name
-      )
+      const ruName = names.find(item => item.language === 'RU')?.name
+
+      name = translateRuSentence(ruName || 'пока нету ничего')
     }
     name = name.toLowerCase()
 
@@ -135,6 +135,10 @@ export class MovieService {
   }
 
   private async cacheMovieContents(id: number, payload: Pick<IGetMovie, 'description' | 'slogan'>) {
+    if (!payload) {
+      return null
+    }
+
     return this.db
       .movieContent
       .create({
@@ -199,9 +203,9 @@ export class MovieService {
       countries: payload.countries,
       genres: payload.genres,
       years: {
-        release: payload.years.year,
-        start: payload.years.start,
-        end: payload.years.end,
+        release: payload.years?.year,
+        start: payload.years?.start,
+        end: payload.years?.end,
       },
       names: formatedNames,
       votes: formatedVotes,

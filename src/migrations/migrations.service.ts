@@ -78,7 +78,7 @@ export class MigrationsService {
   public async startMigration(payload: StartMigrationInputSchema): Promise<GetMigrationsProgressSchema> {
     const job = await this.migrationsQueue.add(
       { type: payload.type },
-      { priority: 3, jobId: generateId() },
+      { priority: 3, jobId: generateId(), removeOnFail: 60 * 60 * 60 * 1000 },
     )
 
     this.migrationsJobIds[payload.type] = job.id

@@ -71,6 +71,6 @@ export function translateRuSentence(sentence: string) {
 
   return sentence
     .split('')
-    .map(item => alphabet[item])
+    .map(item => alphabet[item] || item)
     .join('')
 }

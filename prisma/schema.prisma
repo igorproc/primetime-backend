@@ -128,7 +128,7 @@ model watchContent {
   slug          String      @unique @map("slug") @data.VarChar(128)
   duration      Int?        @map("duration") @data.UnsignedInt
   kinopoiskId   Int         @unique @map("kinopoisk_id") @data.UnsignedInt
-  imdbId        String?     @unique @map("imdb_id") @data.VarChar(12)
+  imdbId        String?     @map("imdb_id") @data.VarChar(12)
   posterDisplay String      @map("poster_display") @data.VarChar(256)
   posterPreview String?     @map("poster_preview") @data.VarChar(256)
   ageLimits     Int?        @map("age_limits") @data.UnsignedInt
@@ -151,7 +151,7 @@ model watchContent {
 
 model movieYear {
   id    Int  @id
-  year  Int  @map("release_year") @data.UnsignedInt
+  year  Int? @map("release_year") @data.UnsignedInt
   start Int? @map("start_show") @data.UnsignedInt
   end   Int? @map("end_show") @data.UnsignedInt
 
