@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BalancerController } from '../controllers/balancer.controller';
+import { BalancerController } from '../balancers/controllers/balancer.controller';
 
 describe('ContentController', () => {
   let controller: BalancerController;

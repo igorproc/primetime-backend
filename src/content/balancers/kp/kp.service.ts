@@ -6,7 +6,7 @@ import { KinopoiskUnnoficialRoutes } from '@/content/balancers/kp/kp.routes'
 import { createRequestInstance, type TCreateRequestInstance } from '@/content/utils/axios'
 import { useSlugBuilder, type TGetSlug } from '@/content/utils/slug'
 // Types & Interfaces
-import { EMovieTypes, IBalancerService, IGetMovie } from '@/content/balancers/balancer.types'
+import { EMovieTypes, IBalancerService, IExpiredToken, IGetMovie } from '@/content/balancers/balancer.types'
 import { type Film } from '@@/.types/content-balancer/kp'
 
 @Injectable()
@@ -53,13 +53,16 @@ export class KpService implements IBalancerService {
     return names
   }
 
-  public async getMovie(token: string, kinopoiskId: number): Promise<IGetMovie> {
+  public async getMovie(token: string, kinopoiskId: number): Promise<IGetMovie | IExpiredToken> {
     try {
       const data = await this.axiosInstance<Film>(
         'GET',
         this.slugBuilder.get('movie', [kinopoiskId]),
         token,
       )
+      if ('error' in data) {
+        return { status: 'error', withDelete: false }
+      }
 
       const formatData: IGetMovie = {
         kinopoiskId: data?.kinopoiskId,

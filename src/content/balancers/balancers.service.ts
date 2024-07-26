@@ -1,35 +1,27 @@
-// Node Deps
+// Module Deps
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
-// Other Services
+// Other Modules
 import { DbService } from '@/db/db.service'
 import { KpPayService } from '@/content/balancers/kp-pay/kp-pay.service'
 import { KpService } from '@/content/balancers/kp/kp.service'
 import { MovieService } from '@/content/cache/movie/movie.service'
-// Utils
-import { getPageDataSize } from '@utils/generate'
 // Validators
-import {
-  AddBalancerTokenInputSchema,
-  GetBalancersListInputSchema
-} from '@/content/dto/validate.dto'
+import { AddBalancerTokenInputSchema, GetBalancersListInputSchema } from '@/content/balancers/dto/validate.dto'
+// Swagger Schemas
+import { SuccessChangeContentBalancer, SuccessGetContentBalancerList } from '@/content/balancers/dto/swagger.dto'
 // Errors
 import { ContentErrors } from '@/content/content.errors'
-// Swagger Schemas
-import {
-  SuccessChangeContentBalancer,
-  SuccessGetContentBalancerList,
-  SuccessGetMovie,
-} from '@/content/dto/swagger.dto'
+// Utils
+import { getPageDataSize } from '@utils/generate'
 // Types & Interfaces
 import { balancer_code as EBalancerCodes } from '@prisma/client'
-
 
 type TBalancer = (KpPayService | KpService)
 type TAvailableBalancers = { [key in EBalancerCodes]: TBalancer }
 type TTokensIds = { [key in EBalancerCodes]: number }
 
 @Injectable()
-export class ContentService {
+export class BalancersService {
   private readonly availableServices: TAvailableBalancers
 
   private readonly DEFAULT_PAGE_SIZE: number
@@ -37,12 +29,13 @@ export class ContentService {
 
   constructor(
     private readonly db: DbService,
-    private readonly kpPay: KpPayService,
-    private readonly kp: KpService,
+    private readonly KpBalancer: KpService,
+    private readonly KpPayBalance: KpPayService,
     private readonly movie: MovieService,
   ) {
-    this.availableServices = { KP: this.kp, KP_TG_KEY: this.kpPay }
+    this.availableServices = { KP: this.KpBalancer, KP_TG_KEY: this.KpPayBalance }
     this.tokensIds = { KP: 0, KP_TG_KEY: 0 }
+
     this.DEFAULT_PAGE_SIZE = 12
   }
 
@@ -211,16 +204,29 @@ export class ContentService {
     }
   }
 
-  public async getMovie(kinopoiskId: number): Promise<SuccessGetMovie> {
-    const cacheData = await this.movie.findByKinopoiskId(kinopoiskId)
-    if (cacheData) {
-      return cacheData
+  public getters = {
+    attempts: 0,
+
+    getMovie: async (kinopoiskId: number) => {
+      const cacheData = await this.movie.findByKinopoiskId(kinopoiskId)
+      if (cacheData) {
+        return cacheData
+      }
+
+      const { code, service } = await this.getCurrentBalancer()
+      const token = await this.getToken(code)
+
+      const data = await service.getMovie(token, kinopoiskId)
+      if ('status' in data && data?.status === 'error') {
+        if (this.getters.attempts >= 3) {
+          throw new HttpException(ContentErrors.BALANCER_DOWN, HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+
+        this.getters.attempts += 1
+        return await this.getters.getMovie(kinopoiskId)
+      }
+
+      return data
     }
-
-    const balancer = await this.getCurrentBalancer()
-    const token = await this.getToken(balancer.code)
-    const balancerData = await balancer.service.getMovie(token, kinopoiskId)
-
-    return this.movie.cacheMovie(balancerData)
   }
 }

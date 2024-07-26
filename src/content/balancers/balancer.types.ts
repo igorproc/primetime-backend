@@ -1,5 +1,5 @@
 export interface IBalancerService {
-  getMovie: (token: string, kinopoiskId: number) => Promise<IGetMovie>
+  getMovie: (token: string, kinopoiskId: number) => Promise<IGetMovie | IExpiredToken>
 }
 
 export enum EMovieTypes {
@@ -62,4 +62,9 @@ export interface IGetMovie {
   poster: IMoviePoster,
   rating: IMovieRatings,
   votes: TMovieVote,
+}
+
+export interface IExpiredToken {
+  status: 'error' | 'warn',
+  withDelete: boolean
 }

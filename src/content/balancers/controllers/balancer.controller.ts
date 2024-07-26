@@ -3,7 +3,7 @@ import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common'
 import { RBAcGuard, RBAcPermissions } from 'nestjs-rbac'
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
 // Services
-import { ContentService } from '@/content/content.service'
+import { BalancersService } from '@/content/balancers/balancers.service'
 // Guards
 import { AuthGuard } from '@/auth/guards/auth.guard'
 // Validators
@@ -11,13 +11,13 @@ import {
   AddBalancerTokenInputSchema,
   ChangeActiveBalancerInputSchema,
   GetBalancersListInputSchema,
-} from '@/content/dto/validate.dto'
+} from '@/content/balancers/dto/validate.dto'
 // Swagger Schemas
 import { DefaultErrorSchema } from '@/global.dto'
 import {
   SuccessChangeContentBalancer,
   SuccessGetContentBalancerList
-} from '@/content/dto/swagger.dto'
+} from '@/content/balancers/dto/swagger.dto'
 // Errors
 import { ContentErrors } from '@/content/content.errors'
 
@@ -25,7 +25,7 @@ import { ContentErrors } from '@/content/content.errors'
 @Controller('api/balancer')
 export class BalancerController {
   constructor(
-    private readonly contentService: ContentService,
+    private readonly balancersService: BalancersService,
   ) {}
 
   @RBAcPermissions('dataBalancerAdmin@update')
@@ -41,7 +41,7 @@ export class BalancerController {
   async change(
     @Query() query: ChangeActiveBalancerInputSchema
   ): Promise<SuccessChangeContentBalancer> {
-    return await this.contentService.changeService(query.code)
+    return await this.balancersService.changeService(query.code)
   }
 
   @RBAcPermissions('dataBalancerAdmin@add')
@@ -53,7 +53,7 @@ export class BalancerController {
   async addToken(
     @Body() payload: AddBalancerTokenInputSchema
   ): Promise<SuccessChangeContentBalancer> {
-    return await this.contentService.addToken(payload)
+    return await this.balancersService.addToken(payload)
   }
 
   @RBAcPermissions('dataBalancerAdmin@get')
@@ -80,7 +80,7 @@ export class BalancerController {
       }
     }
 
-    return this.contentService.getAllServices({
+    return this.balancersService.getAllServices({
       page: Number(query.page),
       size: Number(query.size),
     })

@@ -6,13 +6,13 @@ import { MigrationsService } from '@/migrations/migrations.service'
 import { MigrationsConsumer } from '@/migrations/consumers/migrations.consumer'
 // Other Modules
 import { MysqlModule } from '@/db/mysql/mysql.module'
-import { ContentModule } from '@/content/content.module'
 import { MigrationsController } from '@/migrations/migrations.controller'
+import { BalancersModule } from '@/content/balancers/balancers.module'
 
 @Module({
   imports: [
     MysqlModule,
-    ContentModule,
+    BalancersModule,
     BullModule.registerQueue({ name: 'migrate' }),
   ],
   providers: [MigrationsService, MigrationsConsumer],

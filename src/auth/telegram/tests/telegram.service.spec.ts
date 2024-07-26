@@ -6,8 +6,6 @@ import { HttpException } from '@nestjs/common'
 import { TelegramErrors } from '@/auth/telegram/telegram.errors'
 import { DbModule } from '@/db/db.module'
 // Utils
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-expect-error
 import { getDataFromJson } from '@@/test/utis/data.util'
 // Types & Interfaces
 import type { TelegramAuthInput } from '@/auth/telegram/dto/validate.dto'

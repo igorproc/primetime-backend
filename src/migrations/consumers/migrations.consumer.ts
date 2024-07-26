@@ -4,10 +4,11 @@ import { Process, Processor, OnQueueEvent } from '@nestjs/bull'
 import { Job } from 'bull'
 // Other services
 import { MigrationsService } from '@/migrations/migrations.service'
-import { ContentService } from '@/content/content.service'
+import { BalancersService } from '@/content/balancers/balancers.service'
+// Validators
+import { StartMigrationInputSchema } from '@/migrations/dto/validate.dto'
 // Types & Interfaces
 import { TMigrationTaskPayload } from '@/migrations/migrations.service'
-import { asyncWhile } from '@/content/utils/loop'
 
 @Injectable()
 @Processor('migrate')
@@ -17,29 +18,45 @@ export class MigrationsConsumer {
 
   constructor(
     private readonly migrations: MigrationsService,
-    private readonly content: ContentService,
+    private readonly balancer: BalancersService,
   ) {
     this.logger = new Logger(MigrationsConsumer.name)
-    this.MIGRATION_STEP = 15
+    this.MIGRATION_STEP = 30
+  }
+
+  private readonly utils = {
+    waitFor: async (delay: number) => {
+      return new Promise(resolve => {
+        const timer = setTimeout(() => {
+          clearTimeout(timer)
+          resolve(true)
+        }, delay)
+      })
+    }
   }
 
   private async migrateMovies(job: Job<TMigrationTaskPayload>) {
-    let currentIndex = 0
-
     const totalRecords = await this.migrations.getRecordsCount('movie')
-    const condition = () => totalRecords > currentIndex
-    const action = async () => {
+    const action = async (currentIndex: number) => {
       const ids = await this.migrations.getMoviesIds(currentIndex, this.MIGRATION_STEP)
-      for (const id of ids) {
-        await this.content.getMovie(id)
-      }
+      const promiseChain = []
+
+      ids.forEach(id => {
+        promiseChain.push(
+          this.balancer.getters.getMovie(id)
+        )
+      })
+
+      await Promise.allSettled(promiseChain)
+      await this.utils.waitFor(100)
 
       const jobProgress = ((currentIndex / totalRecords) * 100).toFixed()
       await job.progress(jobProgress)
-      currentIndex += this.MIGRATION_STEP
     }
 
-    await asyncWhile(condition, action, 100)
+    for (let currentIndex = 0; totalRecords > currentIndex; currentIndex += this.MIGRATION_STEP) {
+      await action(currentIndex)
+    }
   }
 
   @Process()
@@ -55,7 +72,7 @@ export class MigrationsConsumer {
 
   @OnQueueEvent('failed')
   onError({ data, stacktrace }: Job<TMigrationTaskPayload>) {
-    this.logger.error(`Migration ${data.type} failed`, stacktrace)
+    this.logger.error(`Migration: ${data.type} failed`, stacktrace)
   }
 
   @OnQueueEvent('active')

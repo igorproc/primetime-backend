@@ -8,7 +8,7 @@ import { useSlugBuilder, type TGetSlug } from '@/content/utils/slug'
 // Types & Interfaces
 import {
   EMovieTypes,
-  type IBalancerService,
+  type IBalancerService, IExpiredToken,
   type IGetMovie
 } from '@/content/balancers/balancer.types'
 import { type MovieDtoV14 } from '@@/.types/content-balancer/kp-pay'
@@ -76,12 +76,15 @@ export class KpPayService implements IBalancerService {
     return votes
   }
 
-  public async getMovie(token: string, kinopoiskId: number): Promise<IGetMovie> {
+  public async getMovie(token: string, kinopoiskId: number): Promise<IGetMovie | IExpiredToken> {
     const data = await this.axiosInstance<MovieDtoV14>(
       'GET',
       this.slugBuilder.get('movie', [kinopoiskId]),
       token
     )
+    if ('error' in data) {
+      return { status: 'error', withDelete: false }
+    }
 
     const formatData: IGetMovie = {
       kinopoiskId: data?.id,

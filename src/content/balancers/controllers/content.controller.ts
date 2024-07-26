@@ -9,22 +9,22 @@ import {
 } from '@nestjs/swagger'
 import { RBAcGuard, RBAcPermissions } from 'nestjs-rbac'
 // Services
-import { ContentService } from '@/content/content.service'
+import { BalancersService } from '@/content/balancers/balancers.service'
 // Guards
 import { AuthGuard } from '@/auth/guards/auth.guard'
 // Validators
-import { GetMovieInputSchema } from '@/content/dto/validate.dto'
+import { GetMovieInputSchema } from '@/content/balancers/dto/validate.dto'
 // Errors
 import { ContentErrors } from '@/content/content.errors'
 // Swagger
-import { SuccessGetMovie } from '@/content/dto/swagger.dto'
+import { SuccessGetMovie } from '@/content/balancers/dto/swagger.dto'
 import { DefaultErrorSchema } from '@/global.dto'
 
 @ApiTags('Content')
 @Controller('api/content')
 export class ContentController {
   constructor(
-    private readonly contentService: ContentService,
+    private readonly balancerService: BalancersService,
   ) {}
 
   @RBAcPermissions('watchUser@getMovie')
@@ -45,6 +45,6 @@ export class ContentController {
       return {}
     }
 
-    return await this.contentService.getMovie(Number(params.id))
+    return await this.balancerService.getters.getMovie(Number(params.id))
   }
 }

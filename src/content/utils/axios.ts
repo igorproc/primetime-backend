@@ -11,7 +11,12 @@ interface InstanceSecureKeys {
   header: string,
 }
 
-export type TCreateRequestInstance =  <T>(method: Method, slug: string, data: unknown, secureKey?: string) => Promise<T>
+interface Error {
+  error: 'null' | '_1',
+  code: number,
+}
+
+export type TCreateRequestInstance =  <T>(method: Method, slug: string, data: unknown, secureKey?: string) => Promise<T | Error>
 
 export function createRequestInstance(payload: InstancePayload) {
   let axiosInstance: AxiosInstance | null = null
@@ -28,7 +33,7 @@ export function createRequestInstance(payload: InstancePayload) {
   }
   axiosInstance = createInstance()
 
-  return async <T>(method: Method, slug: string, secureKey?: string, data?: unknown): Promise<T> => {
+  return async <T>(method: Method, slug: string, secureKey?: string, data?: unknown): Promise<T | Error> => {
     if (!axiosInstance) {
       axiosInstance = createInstance()
     }
@@ -49,6 +54,7 @@ export function createRequestInstance(payload: InstancePayload) {
       return response.data
     } catch (error) {
       logger.warn(`Fetch error with data: ${JSON.stringify(error?.response?.data)}`)
+      return { error: '_1', code: error?.code || 502 }
     }
   }
 }

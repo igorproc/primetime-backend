@@ -7,7 +7,7 @@ import { GenresService } from '@/movie/genres/genres.service'
 // Utils
 import { translateRuSentence } from '@utils/translate'
 // Swagger Schemas
-import { SuccessGetMovie } from '@/content/dto/swagger.dto'
+import { SuccessGetMovie } from '@/content/balancers/dto/swagger.dto'
 // Types & Interfaces
 import {
   EMovieVotes,
