@@ -1,0 +1,11 @@
+{$APP_URL} {
+	route /api {
+		uri strip_prefix /api
+		reverse_proxy http://app:{$APP_PORT}
+	}
+
+	route /db {
+		uri strip_prefix /db
+		reverse_proxy http://db:{$MYSQL_PORT}
+	}
+}

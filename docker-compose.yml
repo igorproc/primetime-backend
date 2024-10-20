@@ -1,8 +1,39 @@
 version: '3.8'
 
 services:
-  backend:
+  setup:
+    build:
+      context: .
+      args:
+        - ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
+        - BRANCH_NAME=${BRANCH_NAME}
+      dockerfile: Docker/setup.Dockerfile
+    volumes:
+      - ./:/.env
+    stop_signal: SIGINT
+
+  redis:
+    container_name: primetime-backend-redis-${ENVIRONMENT_NAME}
+    depends_on:
+      - setup
+    image: redis:alpine
+    restart: on-failure
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_BIND=0.0.0.0
+      - REDIS_MAXMEMORY=1gb
+      - REDIS_LOGLEVEL=notice
+    volumes:
+      - ./redis_data:/data
+    ports:
+      - "${REDIS_PORT}:6379"
+    env_file:
+      - .env
+
+  app:
     container_name: primetime-backend-${ENVIRONMENT_NAME}
+    depends_on:
+      - setup
     build:
       context: .
       args:
