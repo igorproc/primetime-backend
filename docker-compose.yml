@@ -11,11 +11,24 @@ services:
       - REDIS_MAXMEMORY=1gb
       - REDIS_LOGLEVEL=notice
     volumes:
-      - ./redis_data:/data
+      - ./data/redis:/data
     ports:
       - "${REDIS_PORT}:6379"
     env_file:
       - .env
+    networks:
+      - app
+
+  db:
+    image: mariadb:latest
+    ports:
+      - "${MYSQL_PORT}:3306"
+    environment:
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+    volumes:
+      - ./data/database:/var/lib/mysql
     networks:
       - app
 
@@ -28,14 +41,35 @@ services:
         - BRANCH_NAME=${BRANCH_NAME}
       dockerfile: Docker/Dockerfile
     ports:
-      - "${PORT}:3001"
+      - "3100:3001"
     environment:
       - ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
       - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      - redis
+      - db
+    networks:
+      - app
+
+  caddy:
+    container_name: primetime-backend-caddy-${ENVIRONMENT_NAME}
+    image: caddy
+    restart: on-failure
+    ports:
+      - "${PORT}:80"
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - db
+      - app
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./data/caddy-data:/data
+      - ./data/caddy-config/config
     networks:
       - app
       - nginx
-
 
 networks:
   app:

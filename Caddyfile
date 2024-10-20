@@ -1,7 +1,7 @@
 {$APP_URL} {
 	route /api {
 		uri strip_prefix /api
-		reverse_proxy http://app:{$APP_PORT}
+		reverse_proxy http://app:3100
 	}
 
 	route /db {
