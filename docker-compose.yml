@@ -21,7 +21,7 @@ services:
   db:
     image: mariadb:latest
     ports:
-      - "3333:3306"
+      - "3306:3306"
     env_file:
       - .env
     volumes:
@@ -61,7 +61,7 @@ services:
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - ./data/caddy-data:/data
-      - ./data/caddy-config/config
+      - ./data/caddy-config:/config
     networks:
       - app
       - nginx
