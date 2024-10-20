@@ -29,24 +29,23 @@ services:
     networks:
       - app
 
-  app:
-    container_name: primetime-backend-${ENVIRONMENT_NAME}
-    build:
-      context: .
-      args:
-        - ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
-        - BRANCH_NAME=${BRANCH_NAME}
-      dockerfile: Docker/Dockerfile
-    ports:
-      - "3100:3001"
-    environment:
-      - ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
-      - CHOKIDAR_USEPOLLING=true
-    depends_on:
-      - redis
-      - db
-    networks:
-      - app
+#  app:
+#    container_name: primetime-backend-${ENVIRONMENT_NAME}
+#    build:
+#      context: .
+#      args:
+#        - ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
+#        - BRANCH_NAME=${BRANCH_NAME}
+#      dockerfile: Docker/Dockerfile
+#    ports:
+#      - "3100:3001"
+#    environment:
+#      - ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
+#    depends_on:
+#      - redis
+#      - db
+#    networks:
+#      - app
 
   caddy:
     container_name: primetime-backend-caddy-${ENVIRONMENT_NAME}
