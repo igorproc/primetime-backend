@@ -3,8 +3,6 @@ version: '3.8'
 services:
   redis:
     container_name: primetime-backend-redis-${ENVIRONMENT_NAME}
-    depends_on:
-      - setup
     image: redis:alpine
     restart: on-failure
     environment:
@@ -18,11 +16,11 @@ services:
       - "${REDIS_PORT}:6379"
     env_file:
       - .env
+    networks:
+      - app
 
   app:
     container_name: primetime-backend-${ENVIRONMENT_NAME}
-    depends_on:
-      - setup
     build:
       context: .
       args:
@@ -34,8 +32,15 @@ services:
     environment:
       - ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
       - CHOKIDAR_USEPOLLING=true
+    networks:
+      - app
+      - nginx
+
 
 networks:
-  default:
+  app:
+    driver: bridge
+    internal: true
+  nginx:
     name: nginx-proxy
     external: true
