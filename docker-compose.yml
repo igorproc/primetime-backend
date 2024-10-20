@@ -6,14 +6,13 @@ services:
     image: redis:alpine
     restart: on-failure
     environment:
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
       - REDIS_BIND=0.0.0.0
       - REDIS_MAXMEMORY=1gb
       - REDIS_LOGLEVEL=notice
     volumes:
       - ./data/redis:/data
     ports:
-      - "${REDIS_PORT}:6379"
+      - "6379:6379"
     env_file:
       - .env
     networks:
@@ -22,11 +21,9 @@ services:
   db:
     image: mariadb:latest
     ports:
-      - "${MYSQL_PORT}:3306"
-    environment:
-      - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
-      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - "3333:3306"
+    env_file:
+      - .env
     volumes:
       - ./data/database:/var/lib/mysql
     networks:
