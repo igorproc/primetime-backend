@@ -51,6 +51,7 @@ jobs:
           PORT=${{ steps.set-env.outputs.PORT }} \
           ENVIRONMENT_NAME=${{ steps.set-env.outputs.ENVIRONMENT_NAME }} && \
           cd /home/projects/primetime-backend-${{ steps.set-env.outputs.ENVIRONMENT_NAME }} && \
+          cp ./Docker/environments/${{ steps.set-env.outputs.ENVIRONMENT_NAME }}.env .env && \
           docker-compose down && \
           docker-compose build --no-cache && \
           docker-compose up -d --force-recreate"

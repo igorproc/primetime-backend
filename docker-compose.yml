@@ -1,17 +1,6 @@
 version: '3.8'
 
 services:
-  setup:
-    build:
-      context: .
-      args:
-        - ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
-        - BRANCH_NAME=${BRANCH_NAME}
-      dockerfile: Docker/setup.Dockerfile
-    volumes:
-      - ./:/.env
-    stop_signal: SIGINT
-
   redis:
     container_name: primetime-backend-redis-${ENVIRONMENT_NAME}
     depends_on:
