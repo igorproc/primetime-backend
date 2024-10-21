@@ -50,6 +50,9 @@ services:
   caddy:
     container_name: primetime-backend-caddy-${ENVIRONMENT_NAME}
     image: caddy
+    build:
+      context: .
+      dockerfile: Docker/mysql.Dockerfile
     restart: on-failure
     ports:
       - "${PORT}:80"
