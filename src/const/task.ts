@@ -1,3 +1,3 @@
-export enum EAviliableTasks {
+export enum EAvailableTasks {
   MIGRATE_MOVIE = 'primetime:migrate-movie'
 }
