@@ -26,33 +26,36 @@ services:
       - .env
     volumes:
       - ./data/database:/var/lib/mysql
+    healthcheck:
+      test: mysqladmin ping -h 0.0.0.0 -u root --password=$$MYSQL_ROOT_PASSWORD
+      timeout: 20s
+      retries: 5
     networks:
       - app
 
-#  app:
-#    container_name: primetime-backend-${ENVIRONMENT_NAME}
-#    build:
-#      context: .
-#      args:
-#        - ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
-#        - BRANCH_NAME=${BRANCH_NAME}
-#      dockerfile: Docker/Dockerfile
-#    ports:
-#      - "3100:3001"
-#    environment:
-#      - ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
-#    depends_on:
-#      - redis
-#      - db
-#    networks:
-#      - app
+  app:
+    container_name: primetime-backend-${ENVIRONMENT_NAME}
+    build:
+      context: .
+      args:
+        - ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
+        - BRANCH_NAME=${BRANCH_NAME}
+      dockerfile: Docker/Dockerfile
+    ports:
+      - "3100:3001"
+    environment:
+      - ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_completed_successfully
+    networks:
+      - app
 
   caddy:
     container_name: primetime-backend-caddy-${ENVIRONMENT_NAME}
     image: caddy
-    build:
-      context: .
-      dockerfile: Docker/mysql.Dockerfile
     restart: on-failure
     ports:
       - "${PORT}:80"
@@ -74,5 +77,5 @@ networks:
     driver: bridge
     internal: true
   nginx:
-    name: nginx-proxy
+    name: nginx-network
     external: true

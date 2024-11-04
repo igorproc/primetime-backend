@@ -1,5 +1,5 @@
 {$APP_URL} {
-	route /api {
+	route /api* {
 		uri strip_prefix /api
 		reverse_proxy http://app:3100
 	}
