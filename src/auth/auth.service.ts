@@ -164,11 +164,15 @@ export class AuthService {
     const accessTokenCode = refreshTokenExpiresDate + Math.random().toString(32)
 
     const accessToken = this.jwtService.sign(
-      { expires: cryptStringToSha256(accessTokenCode), role: data.role },
+      {
+        expires: cryptStringToSha256(accessTokenCode),
+        ...data,
+      },
       { expiresIn: '15m' }
     )
+
     const refreshToken = this.jwtService.sign(
-      { id: data.id, clientId: clientId, role: data.role },
+      { id: data.id, clientId: clientId },
       { expiresIn: '180d' }
     )
 

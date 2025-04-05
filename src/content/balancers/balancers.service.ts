@@ -226,6 +226,9 @@ export class BalancersService {
         return await this.getters.getMovie(kinopoiskId)
       }
 
+      if ('kinopoiskId' in data) {
+        await this.movie.cacheMovie(data)
+      }
       return data
     }
   }

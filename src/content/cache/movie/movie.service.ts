@@ -57,7 +57,7 @@ export class MovieService {
     if (!name) {
       const ruName = names.find(item => item.language === 'RU')?.name
 
-      name = translateRuSentence(ruName || 'пока нету ничего')
+      name = translateRuSentence(ruName || 'пока ничего нет')
     }
     name = name.toLowerCase()
 
