@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common'
 import { DbService } from './db.service'
-import { MysqlModule } from './mysql/mysql.module';
+import { MysqlModule } from './mysql/mysql.module'
 
 @Module({
   providers: [DbService],

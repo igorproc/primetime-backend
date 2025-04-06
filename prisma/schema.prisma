@@ -294,6 +294,61 @@ model watchHistory {
   @@map(name: "watch_history")
 }
 
+// Migration
+model avliableMigrationTasks {
+  // Fields
+  id          Int      @id @default(autoincrement())
+  title       String   @map("title") @data.VarChar(128)
+  description String   @map("description") @data.VarChar(512)
+  code        String   @unique @map("code") @data.VarChar(32)
+  // TimeStamps
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  runnableTasks runnableTasks[]
+
+  // Index
+  @@index([code])
+  // db name
+  @@map("avliable_migration_tasks")
+}
+
+model runnableTasks {
+  id         Int    @id @default(autoincrement())
+  code       String @map("code") @data.VarChar(32)
+  redisJobId String @map("job_id") @data.VarChar(128)
+
+  // TimeStamps
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+  endedAt   DateTime? @map("ended_at")
+
+  // Relations
+  tasks        avliableMigrationTasks @relation(fields: [code], references: [code])
+  ErrorHandler errorHandler?
+
+  @@map("runnable_tasks")
+}
+
+// Error Handlers
+
+model errorHandler {
+  id           Int    @id @default(autoincrement())
+  migrationId  Int?   @unique @map("migration_id")
+  errorMessage String @map("error_message") @data.VarChar(256)
+  errorStack   String @map("error_stack") @data.Text
+
+  // TimeStamps
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  tasks runnableTasks? @relation(fields: [migrationId], references: [id], onDelete: Cascade)
+
+  @@map("error_handler")
+}
+
 // Enums
 enum applications_status {
   enabled

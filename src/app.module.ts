@@ -16,6 +16,7 @@ import { GenresModule } from './movie/genres/genres.module'
 import { CountryService } from './movie/country/country.service'
 import { CountryModule } from './movie/country/country.module'
 import { MigrationsModule } from './migrations/migrations.module'
+import { ErrorHandlerModule } from './error-handler/error-handler.module';
 
 const EnvConfigModule = Env()
 const TelegramConfigModule = Telegram()
@@ -37,7 +38,8 @@ const QueueConfigModule = Queue()
     ContentModule,
     GenresModule,
     CountryModule,
-    MigrationsModule
+    MigrationsModule,
+    ErrorHandlerModule
   ],
   providers: [CountryService]
 })

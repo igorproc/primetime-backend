@@ -44,7 +44,7 @@ export class BalancerController {
     return await this.balancersService.changeService(query.code)
   }
 
-  @RBAcPermissions('dataBalancerAdmin@add')
+  @RBAcPermissions('dataBalancer@add')
   @UseGuards(AuthGuard, RBAcGuard)
   @ApiOperation({ description: 'Add token for balancer by his code' })
   @ApiBearerAuth()
@@ -56,7 +56,7 @@ export class BalancerController {
     return await this.balancersService.addToken(payload)
   }
 
-  @RBAcPermissions('dataBalancerAdmin@get')
+  @RBAcPermissions('dataBalancer@get')
   @UseGuards(AuthGuard, RBAcGuard)
   @ApiOperation({ description: 'Get all content balancers list' })
   @ApiBearerAuth()
