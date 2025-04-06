@@ -1,17 +1,24 @@
 import { type IStorageRbac } from 'nestjs-rbac'
 
 export const AvailableRoles: IStorageRbac = {
-  roles: ['admin', 'user'],
+  roles: ['admin', 'qa', 'user'],
   permissions: {
-    watchUser: ['getMovie'],
-    watchAdmin: ['seedOldContent'],
-    deviceAdmin: ['all', 'delete', 'freeze'],
-    dataBalancerAdmin: ['update', 'get', 'add'],
+    watch: ['getMovie'],
+    device: ['all', 'delete', 'freeze'],
+    dataBalancer: ['update', 'get', 'add'],
+    migration: ['getMigrationsList', 'updateMigration', 'deleteMigration', 'startMigration'],
   },
   grants: {
-    admin: ['&user', 'deviceAdmin', 'dataBalancerAdmin', 'seedOldContent'],
-    qa: ['&user', 'dataBalancerAdmin', 'deviceAdmin@all'],
-    user: ['watchUser'],
+    user: ['watch@getMovie'],
+    qa: ['&user', 'device@all', 'dataBalancer@get', 'migration'],
+    admin: [
+      '&user',
+      '&qa',
+      'deviceAdmin',
+      'dataBalancer',
+      'device',
+      'watch',
+    ],
   },
   filters: [],
 }

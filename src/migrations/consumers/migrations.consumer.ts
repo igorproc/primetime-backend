@@ -3,60 +3,21 @@ import { Injectable, Logger } from '@nestjs/common'
 import { Process, Processor, OnQueueEvent } from '@nestjs/bull'
 import { Job } from 'bull'
 // Other services
-import { MigrationsService } from '@/migrations/migrations.service'
-import { BalancersService } from '@/content/balancers/balancers.service'
-// Validators
-import { StartMigrationInputSchema } from '@/migrations/dto/validate.dto'
+import { EMigrationTaskPayload, MigrationsService } from '@/migrations/services/migrations.service'
+// Movie
+import { MIGRATE_CONSUMER_QUEUE_NAMES } from '@/migrations/migrations.const'
 // Types & Interfaces
-import { TMigrationTaskPayload } from '@/migrations/migrations.service'
+import { TMigrationTaskPayload } from '@/migrations/services/migrations.service'
 
 @Injectable()
-@Processor('migrate')
+@Processor(MIGRATE_CONSUMER_QUEUE_NAMES.MIGRATE)
 export class MigrationsConsumer {
   private readonly logger: Logger
-  private readonly MIGRATION_STEP: number
 
   constructor(
-    private readonly migrations: MigrationsService,
-    private readonly balancer: BalancersService,
+    private readonly movieMigrations: MigrationsService,
   ) {
     this.logger = new Logger(MigrationsConsumer.name)
-    this.MIGRATION_STEP = 30
-  }
-
-  private readonly utils = {
-    waitFor: async (delay: number) => {
-      return new Promise(resolve => {
-        const timer = setTimeout(() => {
-          clearTimeout(timer)
-          resolve(true)
-        }, delay)
-      })
-    }
-  }
-
-  private async migrateMovies(job: Job<TMigrationTaskPayload>) {
-    const totalRecords = await this.migrations.getRecordsCount('movie')
-    const action = async (currentIndex: number) => {
-      const ids = await this.migrations.getMoviesIds(currentIndex, this.MIGRATION_STEP)
-      const promiseChain = []
-
-      ids.forEach(id => {
-        promiseChain.push(
-          this.balancer.getters.getMovie(id)
-        )
-      })
-
-      await Promise.allSettled(promiseChain)
-      await this.utils.waitFor(100)
-
-      const jobProgress = ((currentIndex / totalRecords) * 100).toFixed()
-      await job.progress(jobProgress)
-    }
-
-    for (let currentIndex = 0; totalRecords > currentIndex; currentIndex += this.MIGRATION_STEP) {
-      await action(currentIndex)
-    }
   }
 
   @Process()
@@ -64,8 +25,8 @@ export class MigrationsConsumer {
     const { data } = job
 
     switch (data.type) {
-      case 'MOVIE':
-        await this.migrateMovies(job)
+      case EMigrationTaskPayload.MOVIE:
+        await this.movieMigrations.startOldMoviesMigration(data)
         return true
     }
   }
@@ -77,7 +38,7 @@ export class MigrationsConsumer {
 
   @OnQueueEvent('active')
   onActive({ data }: Job<TMigrationTaskPayload>) {
-    this.logger.log(
+    this.logger.debug(
       `Migration: ${data.type} in progress`,
     )
   }

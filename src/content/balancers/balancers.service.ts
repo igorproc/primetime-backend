@@ -8,7 +8,11 @@ import { MovieService } from '@/content/cache/movie/movie.service'
 // Validators
 import { AddBalancerTokenInputSchema, GetBalancersListInputSchema } from '@/content/balancers/dto/validate.dto'
 // Swagger Schemas
-import { SuccessChangeContentBalancer, SuccessGetContentBalancerList } from '@/content/balancers/dto/swagger.dto'
+import {
+  SuccessChangeContentBalancer,
+  SuccessGetContentBalancerList,
+  SuccessGetMovie,
+} from '@/content/balancers/dto/swagger.dto'
 // Errors
 import { ContentErrors } from '@/content/content.errors'
 // Utils
@@ -207,8 +211,8 @@ export class BalancersService {
   public getters = {
     attempts: 0,
 
-    getMovie: async (kinopoiskId: number) => {
-      const cacheData = await this.movie.findByKinopoiskId(kinopoiskId)
+    getMovie: async (kinopoiskId: number): Promise<SuccessGetMovie> => {
+      let cacheData = await this.movie.findByKinopoiskId(kinopoiskId)
       if (cacheData) {
         return cacheData
       }
@@ -227,9 +231,9 @@ export class BalancersService {
       }
 
       if ('kinopoiskId' in data) {
-        await this.movie.cacheMovie(data)
+        cacheData = await this.movie.cacheMovie(data)
       }
-      return data
+      return cacheData
     }
   }
 }
