@@ -7,9 +7,9 @@ ENV BRANCH_NAME=${BRANCH_NAME}
 
 WORKDIR /app
 
-# RUN apk update && apk add --no-cache git
-
 COPY .. .
+
+RUN /bin/sh -c "find ./Docker/scripts/ -type f -exec chmod +x {} \;"
 
 FROM node:20.15.0
 
@@ -25,7 +25,7 @@ RUN npm ci
 
 COPY .. .
 
-RUN /bin/sh -c "find ./Docker/scripts/ -type f -exec chmod +x {} \; && ./Docker/scripts/${ENVIRONMENT_NAME}.sh"
+RUN /bin/sh -c "./Docker/scripts/copy-env.sh ${ENVIRONMENT_NAME} && ./Docker/scripts/${ENVIRONMENT_NAME}.sh"
 
 EXPOSE 3100
 

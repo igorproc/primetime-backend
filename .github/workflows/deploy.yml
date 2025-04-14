@@ -43,7 +43,7 @@ jobs:
             echo "::set-output name=BRANCH_NAME::main"
           fi
 
-      - name: Deploy to server
+      - name: Prepare Build
         run: |
           scp -r ./* ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }}:/home/projects/primetime-backend-${{ steps.set-env.outputs.ENVIRONMENT_NAME }}
           ssh ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} "\
@@ -51,7 +51,11 @@ jobs:
           PORT=${{ steps.set-env.outputs.PORT }} \
           ENVIRONMENT_NAME=${{ steps.set-env.outputs.ENVIRONMENT_NAME }} && \
           cd /home/projects/primetime-backend-${{ steps.set-env.outputs.ENVIRONMENT_NAME }} && \
-          cp ./Docker/environments/.${{ steps.set-env.outputs.ENVIRONMENT_NAME }}.env .env && \
+          git clone --single-branch --branch $BRANCH_NAME https://github.com/igorproc/primetime-backend.git . && \
+          sh ./Docker/scripts/copy-env.sh ${{ steps.set-env.outputs.ENVIRONMENT_NAME }}
+
+      - name: Deploy to server
+        run: |
           docker-compose down && \
           docker-compose build --no-cache && \
           docker-compose up -d --force-recreate"

@@ -25,9 +25,9 @@ services:
     ports:
       - "3306:${MYSQL_PORT}"
     env_file:
-      - .env
-    # volumes:
-    #   - ./data/database:/var/lib/mysql
+      - ./Docker/environments/.db.env
+    volumes:
+      - ./data/database:/var/lib/mysql
     healthcheck:
       test: mysqladmin ping -h 0.0.0.0 -u root --password=$$MYSQL_ROOT_PASSWORD
       timeout: 10s
@@ -71,7 +71,6 @@ services:
     networks:
       - app
       - nginx
-
 
 networks:
   app:
