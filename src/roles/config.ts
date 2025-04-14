@@ -10,6 +10,7 @@ export const AvailableRoles: IStorageRbac = {
   },
   grants: {
     user: ['watch@getMovie'],
+    user_verify: ['&user'],
     qa: ['&user', 'device@all', 'dataBalancer@get', 'migration'],
     admin: [
       '&user',

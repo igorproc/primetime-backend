@@ -21,7 +21,8 @@ export class AuthGuard implements CanActivate {
     private readonly db: DbService,
   ) {
     this.roleConditionMap = {
-      'user': [EUserRoles.USER_DEFAULT, EUserRoles.USER_VERIFY],
+      'user': [EUserRoles.USER_DEFAULT],
+      'user_verify': [EUserRoles.DEV_VERIFY],
       'admin': [EUserRoles.ADMIN, EUserRoles.DEV_VERIFY],
       'qa': [EUserRoles.QA_DEFAULT, EUserRoles.QA_VERIFY, EUserRoles.DEV_POOL],
     }
