@@ -11,7 +11,6 @@
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start:stage": "nest start",
     "start:production": "node dist/src/main.js",
     "generate:types": "node scripts/generateTypes.js",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
@@ -19,7 +18,8 @@
     "test:watch": "jest --config jest.config.ts --watch",
     "test:cov": "jest --config jest.config.ts --coverage",
     "test:e2e": "jest --config ./test/e2e/config.json",
-    "make:migration": "prisma format && prisma validate && prisma migrate dev --create-only"
+    "make:migration": "prisma format && prisma validate && prisma migrate dev --create-only",
+    "run:deploy:migration": "prisma migrate deploy && node dist/src/main.js"
   },
   "dependencies": {
     "@nestjs/bull": "^10.1.1",
