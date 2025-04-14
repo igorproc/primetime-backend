@@ -8,6 +8,7 @@ import { TelegramService } from '@/auth/telegram/telegram.service'
 import { addTimeToCurrentDate, getCurrentDate } from '@utils/time'
 import { cryptStringToSha256 } from '@utils/crypt'
 import { isValidUUID } from '@utils/validate'
+import { checkErrorIsResponseError } from '@utils/error'
 // Errors
 import { AuthErrors } from '@/auth/auth.errors'
 // Types & Interfaces
@@ -19,7 +20,6 @@ import {
   type IRefreshTokenPayload,
 } from '@/auth/auth.types'
 import { SuccessAuthSchema, SuccessAuthUser } from '@/auth/dto/swagger.dto'
-import { checkErrorIsResponseError } from '@utils/error'
 
 // Expand if add new auth service
 type TAvailableServices = TelegramService
@@ -34,9 +34,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly telegramAuthService: TelegramService
   ) {
-    this.serviceAdapterByType = {
-      TG: telegramAuthService
-    }
+    this.serviceAdapterByType = { TG: telegramAuthService }
   }
 
   private dbActions = {
@@ -212,7 +210,12 @@ export class AuthService {
     userData = await this
       .getCurrentServiceByType(type)
       .authUser(data)
-    const tokens = await this.createTokens(userData, clientId)
+
+    const user = await this.db.user.create({
+      data: userData,
+      select: { id: true, role: true,  }
+    })
+    const tokens = await this.createTokens(user, clientId)
     return { user: userData, tokens }
   }
 
@@ -226,9 +229,15 @@ export class AuthService {
     const tokensData = await this.db
       .token
       .findFirst({
-        where: { refreshToken: refreshToken }
+        where: { refreshToken: refreshToken },
+        select: {
+          expiresAt: true,
+          revoked: true,
+          user: true,
+        },
       })
     const tokenIsExpired = tokensData.expiresAt.getTime() - currentDate.getTime() < 0
+
     if (tokensData.revoked || tokenIsExpired) {
       this.deleteTokensByRefreshToken(refreshToken)
       throw new HttpException(
@@ -237,23 +246,23 @@ export class AuthService {
       )
     }
 
-    const userData = await this.db.user.findUnique({
-      where: { id: jwtDecode.id }
-    })
-    return await this.createTokens(userData, jwtDecode.clientId)
+    return await this.createTokens(tokensData.user, jwtDecode.clientId)
   }
 
   public async logout(refreshToken: string) {
     try {
       const jwtData: IRefreshTokenPayload = await this.decodeJWT('refresh', refreshToken)
-      await this.dbActions.removeUserFromClientId(jwtData.clientId)
-      await this.deleteTokensByRefreshToken(refreshToken)
+      await Promise.all([
+        this.dbActions.removeUserFromClientId(jwtData.clientId),
+        this.deleteTokensByRefreshToken(refreshToken),
+      ])
 
       return { successLogout: true }
     } catch (error) {
       if (checkErrorIsResponseError(error.message)) {
         throw error
       }
+
       throw new HttpException(
         AuthErrors.INTERNAL_ERROR,
         HttpStatus.INTERNAL_SERVER_ERROR

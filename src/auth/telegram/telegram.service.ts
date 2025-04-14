@@ -37,7 +37,7 @@ export class TelegramService implements IAuthServiceProvider {
     return dataHmac === hash
   }
 
-  public async authUser(data: TelegramAuthInput) {
+  public async authUser(data: TelegramAuthInput): Promise<TTelegramDataCreate> {
     const dataIsValid = this.validateTelegramData(data)
     const currentTimestamp = getCurrentTimestamp()
     const dataIsExpired = currentTimestamp - data.authDate > MAX_PAYLOAD_LIFE
@@ -55,16 +55,13 @@ export class TelegramService implements IAuthServiceProvider {
       )
     }
 
-    const telegramDataSourceForCreate: TTelegramDataCreate = {
+    return {
       id: data.id,
-      firstName: data.firstName,
+      displayName: data.firstName,
       username: data.username,
       photoUrl: data.photoUrl,
       role: user_roles.USER_VERIFY,
       lastVisited: getCurrentDate(),
     }
-    return this.db
-      .user
-      .create({ data: telegramDataSourceForCreate })
   }
 }
