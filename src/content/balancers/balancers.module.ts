@@ -9,9 +9,10 @@ import { DbModule } from '@/db/db.module'
 import { KpModule } from '@/content/balancers/kp/kp.module'
 import { KpPayModule } from '@/content/balancers/kp-pay/kp-pay.module'
 import { MovieModule } from '@/content/cache/movie/movie.module'
+import { StaffModule } from '@/content/cache/staff/staff.module'
 
 @Module({
-  imports: [KpModule, KpPayModule, DbModule, MovieModule],
+  imports: [KpModule, KpPayModule, DbModule, MovieModule, StaffModule],
   providers: [BalancersService],
   controllers: [BalancerController, ContentController],
   exports: [BalancersService],

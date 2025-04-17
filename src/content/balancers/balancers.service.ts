@@ -19,6 +19,8 @@ import { ContentErrors } from '@/content/content.errors'
 import { getPageDataSize } from '@utils/generate'
 // Types & Interfaces
 import { balancer_code as EBalancerCodes } from '@prisma/client'
+import { StaffService } from '@/content/cache/staff/staff.service'
+import { difference } from 'es-toolkit/compat'
 
 type TBalancer = (KpPayService | KpService)
 type TAvailableBalancers = { [key in EBalancerCodes]: TBalancer }
@@ -36,6 +38,7 @@ export class BalancersService {
     private readonly KpBalancer: KpService,
     private readonly KpPayBalance: KpPayService,
     private readonly movie: MovieService,
+    private readonly staff: StaffService,
   ) {
     this.availableServices = { KP: this.KpBalancer, KP_TG_KEY: this.KpPayBalance }
     this.tokensIds = { KP: 0, KP_TG_KEY: 0 }
@@ -234,6 +237,25 @@ export class BalancersService {
         cacheData = await this.movie.cacheMovie(data)
       }
       return cacheData
+    },
+
+    getStaffByKinopoiskId: async (kinopoiskId: number) => {
+      const { code, service } = await this.getCurrentBalancer()
+      const token = await this.getToken(code)
+
+      const [
+        cachedStaffIds,
+        apiStaffIds,
+      ] = await Promise.all([
+        this.staff.getListByKinopoiskId(kinopoiskId),
+        service.getMovieStaff(token, kinopoiskId),
+      ])
+
+      if (!('staffKinopoiskId' in apiStaffIds)) {
+        return null
+      }
+
+      return difference(apiStaffIds.staffKinopoiskId, cachedStaffIds)
     }
   }
 }

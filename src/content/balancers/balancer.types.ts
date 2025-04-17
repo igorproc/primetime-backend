@@ -1,5 +1,12 @@
+import {
+  staff_sex,
+  staff_profession_key
+} from '@prisma/client'
+
 export interface IBalancerService {
   getMovie: (token: string, kinopoiskId: number) => Promise<IGetMovie | IExpiredToken>
+  getStaffInfo: (token: string, staffKinopoiskId: number) => Promise<IGetStaffInfo | IExpiredToken>
+  getMovieStaff: (token: string, kinopoiskId: number) => Promise<IGetMovieStaffList | IExpiredToken>
 }
 
 export enum EMovieTypes {
@@ -67,4 +74,28 @@ export interface IGetMovie {
 export interface IExpiredToken {
   status: 'error' | 'warn',
   withDelete: boolean
+}
+
+export interface IGetStaffInfo {
+  staffKinopoiskId: number
+  name?: string
+  nameAlt?: string
+  sex?: staff_sex
+  growth?: number
+  birthday?: Date
+  birthplace?: string
+  deathplace?: string
+  avatarUrl?: string
+  linkMovies?: IGetMovieStaff[]
+  linkFacts?: string[]
+}
+
+export interface IGetMovieStaff {
+  kinopoiskId: number
+  professionKey: staff_profession_key
+  role: string
+}
+
+export interface IGetMovieStaffList {
+  staffKinopoiskId: number[]
 }

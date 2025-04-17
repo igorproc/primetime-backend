@@ -142,7 +142,7 @@ export class MovieService {
       .create({
         data: {
           id,
-          year: years.release,
+          year: years?.release,
           start: years?.start || null,
           end: years?.end || null,
         }

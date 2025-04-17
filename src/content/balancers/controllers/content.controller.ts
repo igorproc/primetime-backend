@@ -1,5 +1,5 @@
 // Node Deps
-import { Controller, Get, Param, UseGuards } from '@nestjs/common'
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common'
 import {
   ApiBearerAuth,
   ApiOkResponse,
@@ -27,12 +27,12 @@ export class ContentController {
     private readonly balancerService: BalancersService,
   ) {}
 
-  @RBAcPermissions('watchUser@getMovie')
-  @UseGuards(AuthGuard, RBAcGuard)
+  // @RBAcPermissions('watchUser@getMovie')
+  // @UseGuards(AuthGuard, RBAcGuard)
   @Get('movie/:id')
   @ApiTags('user')
   @ApiOperation({ description: 'Get movie by kinopoisk id' })
-  @ApiBearerAuth()
+  // @ApiBearerAuth()
   @ApiOkResponse({ type: SuccessGetMovie })
   @ApiResponse({
     status: 500,
@@ -46,5 +46,12 @@ export class ContentController {
     }
 
     return await this.balancerService.getters.getMovie(Number(params.id))
+  }
+
+  @Get('movie/staff/:id')
+  async getStaffByMovie(
+    @Param() params: GetMovieInputSchema
+  ) {
+    return await this.balancerService.getters.getStaffByKinopoiskId(Number(params.id))
   }
 }

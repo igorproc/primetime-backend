@@ -21,6 +21,7 @@ import {
 
 @ApiTags('Migrations')
 @Controller('migrations')
+@UseGuards(AuthGuard, RBAcGuard)
 export class MigrationsController {
   constructor(
     private readonly migrationService: MigrationsService,
@@ -28,7 +29,7 @@ export class MigrationsController {
   ) {}
 
   @RBAcPermissions('migration@getMigrationsList')
-  @UseGuards(AuthGuard, RBAcGuard)
+
   @Get('list')
   @ApiOperation({ description: 'Get all available  migrations list' })
   @ApiBearerAuth()
@@ -46,7 +47,7 @@ export class MigrationsController {
   }
 
   @RBAcPermissions('migration@startMigration')
-  @UseGuards(AuthGuard, RBAcGuard)
+  // @UseGuards(AuthGuard, RBAcGuard)
   @Post('start')
   @ApiOperation({ description: 'Start migrate operation' })
   @ApiBearerAuth()

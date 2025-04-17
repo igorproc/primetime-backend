@@ -9,9 +9,12 @@ import { useSlugBuilder, type TGetSlug } from '@/content/utils/slug'
 import {
   EMovieTypes,
   type IBalancerService, IExpiredToken,
-  type IGetMovie
+  type IGetMovie, IGetMovieStaffList, IGetStaffInfo
 } from '@/content/balancers/balancer.types'
-import { type MovieDtoV14 } from '@@/.types/content-balancer/kp-pay'
+import { type MovieDtoV14, type Person } from '@@/.types/content-balancer/kp-pay'
+import moment from 'moment'
+import { staff_profession_key } from '@prisma/client'
+import { PersonResponse } from '@@/.types/content-balancer/kp'
 
 @Injectable()
 export class KpPayService implements IBalancerService {
@@ -76,14 +79,14 @@ export class KpPayService implements IBalancerService {
     return votes
   }
 
-  public async getMovie(token: string, kinopoiskId: number): Promise<IGetMovie | IExpiredToken> {
+  public async getMovie(token: string, kinopoiskId: number) {
     const data = await this.axiosInstance<MovieDtoV14>(
       'GET',
       this.slugBuilder.get('movie', [kinopoiskId]),
       token
     )
     if ('error' in data) {
-      return { status: 'error', withDelete: false }
+      return { status: 'error', withDelete: false } as IExpiredToken
     }
 
     const formatData: IGetMovie = {
@@ -123,6 +126,93 @@ export class KpPayService implements IBalancerService {
 
     if (data.externalId?.imdb) {
       formatData.imdbId = data.externalId.imdb
+    }
+
+    return formatData
+  }
+
+  public async getStaffInfo(token: string, staffKinopoiskId: number) {
+    const data = await this.axiosInstance<Person>(
+      'GET',
+      this.slugBuilder.get('staffInfo', [staffKinopoiskId]),
+      token,
+    )
+
+    if ('error' in data) {
+      return { status: 'error', withDelete: false } as IExpiredToken
+    }
+
+    let sex: IGetStaffInfo['sex'] = null
+    if (data.sex === 'Женский') {
+      sex = 'FEMALE'
+    }
+    if (data.sex === 'Мужской') {
+      sex = 'MALE'
+    }
+
+    const allowProfessionKey: string[] = [
+      'actor',
+      'cameo',
+      'producer',
+      'designer',
+      'director',
+      'editor',
+      'writer',
+    ]
+
+    function getProfessionKey(enProfession: string) {
+      const keys: { [key: string]: staff_profession_key } = {
+        actor: 'ACTOR',
+        producer: 'PRODUCER',
+        cameo: 'ACTOR',
+        designer: 'DESIGN',
+        director: 'DIRECTOR',
+        editor: 'EDITOR',
+        writer: 'WRITER',
+      }
+
+      return keys[enProfession]
+    }
+
+    const formatData: IGetStaffInfo = {
+      staffKinopoiskId: data.id,
+      name: data.name,
+      nameAlt: data.enName,
+      sex,
+      growth: data.growth,
+      birthday: data?.birthday ? moment(data.birthday).toDate() : null,
+      birthplace: data.birthPlace?.join(', ') || null,
+      deathplace: data.deathPlace?.join(', ') || null,
+      avatarUrl: data.photo,
+      linkMovies: data.movies
+        ?.filter(movie => allowProfessionKey.includes(movie.enProfession))
+        .map(movie => ({
+          kinopoiskId: movie.id,
+          professionKey: getProfessionKey(movie.enProfession),
+          role: movie.description,
+        })) || [],
+      linkFacts: data.facts?.map(fact => fact.value) || [],
+    }
+
+    return formatData
+  }
+
+  public async getMovieStaff(token: string, kinopoiskId: number) {
+    const data = await this.axiosInstance<MovieDtoV14>(
+      'GET',
+      this.slugBuilder.get('movieStaff', [kinopoiskId]),
+      token,
+    )
+
+    if ('error' in data) {
+      return { status: 'error', withDelete: false } as IExpiredToken
+    }
+
+    const formatData: IGetMovieStaffList = {
+      staffKinopoiskId:
+        data?.persons?.length
+          ? data.persons.map(person => person.id)
+          : []
     }
 
     return formatData

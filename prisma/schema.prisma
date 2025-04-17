@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "darwin", "debian-openssl-1.1.x"]
 }
 
@@ -59,9 +59,8 @@ model user {
   updatedAt   DateTime   @default(now()) @updatedAt @map("updated_at")
 
   // Relations
-  device       device[]
-  token        token[]
-  watchHistory watchHistory[]
+  device device[]
+  token  token[]
 
   @@map("users")
 }
@@ -145,11 +144,11 @@ model watchContent {
   moviteRating movieRating[]
   movieCountry movieCountry[]
   contents     movieContent?
-  watchHistory watchHistory[]
+  movieStaff   movieStaff[]
 
   // Index
   @@index([kinopoiskId])
-  @@map("watchs_content")
+  @@map("movie_content")
 }
 
 model movieYear {
@@ -281,18 +280,67 @@ model country {
   @@map("countries")
 }
 
-model watchHistory {
-  id             Int      @id @default(autoincrement())
-  userId         Int      @map("user_id")
-  watchContentId Int      @map(name: "watch_content_id")
-  is_deleted     Boolean  @default(false)
-  created_at     DateTime @default(now())
-  updated_at     DateTime @updatedAt
+// Staff
+model staffInfo {
+  // Fields
+  id          Int        @id @default(autoincrement())
+  kinopoiskId Int        @unique @map("kinopoisk_id") @data.UnsignedInt
+  name        String?    @data.VarChar(128)
+  nameAlt     String?    @map("name_alt") @data.VarChar(128)
+  sex         staff_sex?
+  growth      Int?       @data.UnsignedInt()
+  birthday    DateTime?
+  birthplace  String?    @data.VarChar(128)
+  deathplace  String?    @data.VarChar(128)
+  avatarUrl   String?    @data.VarChar(512)
 
-  user         user         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  watchContent watchContent @relation(fields: [watchContentId], references: [id], onDelete: Cascade)
+  // TimeStamps
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
-  @@map(name: "watch_history")
+  // Relations
+  movieStaff movieStaff[]
+  staffFact  staffFact[]
+
+  @@index([kinopoiskId])
+  @@map(name: "staff_info")
+}
+
+model staffFact {
+  // Fields
+  id          Int    @id @default(autoincrement())
+  staffInfoId Int    @map(name: "staff_info_id")
+  content     String @data.Text
+
+  // TimeStamps
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  staffInfo staffInfo @relation(fields: [staffInfoId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([staffInfoId])
+  @@map(name: "staff_facts")
+}
+
+model movieStaff {
+  // Fields
+  id             Int                  @id @default(autoincrement())
+  movieContentId Int                  @map(name: "movie_content_id")
+  staffInfoId    Int                  @map(name: "staff_info_id")
+  professionKey  staff_profession_key @map(name: "profession_key")
+  role           String?              @data.VarChar(64)
+
+  // TimeStamps
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  staffInfo    staffInfo    @relation(fields: [staffInfoId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  watchContent watchContent @relation(fields: [movieContentId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([professionKey])
+  @@map(name: "movie_staff")
 }
 
 // Migration
@@ -401,4 +449,22 @@ enum movie_votes_codes {
   IMDB
   CRITICS
   RU_CRITICS
+}
+
+enum staff_profession_key {
+  WRITER
+  OPERATOR
+  EDITOR
+  COMPOSER
+  TRANSLATOR
+  DIRECTOR
+  DESIGN
+  PRODUCER
+  ACTOR
+  VOICE_DIRECTOR
+}
+
+enum staff_sex {
+  MALE
+  FEMALE
 }

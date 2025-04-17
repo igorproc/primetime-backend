@@ -37,6 +37,7 @@
     "@prisma/client": "^5.13.0",
     "@types/cookie-parser": "^1.4.7",
     "cookie-parser": "^1.4.6",
+    "es-toolkit": "^1.34.1",
     "nestjs-rbac": "^1.10.0",
     "nestjs-telegram": "^1.2.0",
     "reflect-metadata": "^0.1.13",

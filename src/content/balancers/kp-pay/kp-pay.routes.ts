@@ -1,3 +1,5 @@
 export const KiniopoiskTgRoutes = {
-  movie: (id: number) => `v1.4/movie/${id}`,
+  movie: (kinopoiskId: number) => `v1.4/movie/${kinopoiskId}`,
+  staffInfo: (staffId: number) => `v1.4/person/${staffId}`,
+  movieStaff: (kinopoiskId: number) => `v1.4/movie/${kinopoiskId}`,
 }

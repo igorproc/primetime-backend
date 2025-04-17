@@ -6,8 +6,16 @@ import { KinopoiskUnnoficialRoutes } from '@/content/balancers/kp/kp.routes'
 import { createRequestInstance, type TCreateRequestInstance } from '@/content/utils/axios'
 import { useSlugBuilder, type TGetSlug } from '@/content/utils/slug'
 // Types & Interfaces
-import { EMovieTypes, IBalancerService, IExpiredToken, IGetMovie } from '@/content/balancers/balancer.types'
-import { type Film } from '@@/.types/content-balancer/kp'
+import {
+  EMovieTypes,
+  IBalancerService,
+  IExpiredToken,
+  IGetMovie, IGetMovieStaffList,
+  IGetStaffInfo
+} from '@/content/balancers/balancer.types'
+import { type Film, PersonResponse, StaffResponse } from '@@/.types/content-balancer/kp'
+import moment from 'moment'
+import { staff_profession_key } from '@prisma/client'
 
 @Injectable()
 export class KpService implements IBalancerService {
@@ -121,5 +129,106 @@ export class KpService implements IBalancerService {
     } catch (error) {
       throw error
     }
+  }
+
+  public async getStaffInfo(token: string, staffKinopoiskId: number) {
+    const data = await this.axiosInstance<PersonResponse>(
+      'GET',
+      this.slugBuilder.get('staffInfo', [staffKinopoiskId]),
+      token,
+    )
+
+    if ('error' in data) {
+      return { status: 'error', withDelete: false } as IExpiredToken
+    }
+
+    const allowProfessionKey: string[] = [
+      'WRITER', 'OPERATOR', 'EDITOR',
+      'COMPOSER', 'PRODUCER_USSR', 'HIMSELF',
+      'HERSELF', 'HRONO_TITR_MALE', 'HRONO_TITR_FEMALE',
+      'TRANSLATOR', 'DIRECTOR', 'DESIGN',
+      'PRODUCER', 'ACTOR', 'VOICE_DIRECTOR',
+    ]
+
+    function getProfessionKey(professionKey: string) {
+      const keys: { [key: string]: staff_profession_key } = {
+        WRITER: 'WRITER',
+        OPERATOR: 'OPERATOR',
+        EDITOR: 'EDITOR',
+        COMPOSER: 'COMPOSER',
+        PRODUCER_USSR: 'PRODUCER',
+        HIMSELF: 'ACTOR',
+        HERSELF: 'ACTOR',
+        HRONO_TITR_MALE: 'ACTOR',
+        HRONO_TITR_FEMALE: 'ACTOR',
+        TRANSLATOR: 'TRANSLATOR',
+        DIRECTOR: 'DIRECTOR',
+        DESIGN: 'DESIGN',
+        PRODUCER: 'PRODUCER',
+        ACTOR: 'ACTOR',
+        VOICE_DIRECTOR: 'VOICE_DIRECTOR',
+      }
+
+      return keys[professionKey]
+    }
+
+    function getRole(
+      description: string,
+      professionKey: string,
+      { name, nameAlt }: { name: string, nameAlt: string }
+    ) {
+      switch (professionKey) {
+        case 'HIMSELF':
+        case 'HERSELF':
+          return name || nameAlt
+        default:
+          return description
+      }
+    }
+
+    const formatData: IGetStaffInfo = {
+      staffKinopoiskId: data.personId,
+      name: data.nameRu,
+      nameAlt: data.nameEn,
+      sex: ['MALE', 'FEMALE'].includes(data.sex) ? data.sex : null,
+      growth: Number(data.growth) || null,
+      birthday: data?.birthday ? moment(data.birthday).toDate() : null,
+      birthplace: data.birthplace,
+      deathplace: data.deathplace,
+      avatarUrl: data.posterUrl,
+      linkMovies: data.films
+        ?.filter(movie => allowProfessionKey.includes(movie.professionKey))
+        .map(movie => ({
+          kinopoiskId: movie.filmId,
+          professionKey: getProfessionKey(movie.professionKey),
+          role: getRole(movie.description, movie.professionKey, {
+            name: data.nameRu,
+            nameAlt: data.nameEn,
+          }),
+        })) || [],
+      linkFacts: data.facts?.length ? data.facts : [],
+    }
+
+    return formatData
+  }
+
+  public async getMovieStaff(token: string, kinopoiskId: number) {
+    const data = await this.axiosInstance<StaffResponse[]>(
+      'GET',
+      this.slugBuilder.get('movieStaff', [kinopoiskId]),
+      token,
+    )
+
+    if ('error' in data) {
+      return { status: 'error', withDelete: false } as IExpiredToken
+    }
+
+    const formatData: IGetMovieStaffList = {
+      staffKinopoiskId: data
+        ?.filter(staff => staff.staffId)
+        .map(staff => staff.staffId) || []
+    }
+
+    return formatData
   }
 }
