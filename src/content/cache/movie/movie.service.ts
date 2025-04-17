@@ -21,7 +21,7 @@ import type {
   TMovieNames,
   TMovieRatingModel,
   TMovieYears,
-  TMovieContent
+  TMovieText
 } from '@/global.types'
 
 type TFormatMovie = {
@@ -30,7 +30,7 @@ type TFormatMovie = {
   genres: string[],
   ratings: TMovieRatingModel[],
   years: TMovieYears,
-  content: TMovieContent,
+  content: TMovieText,
 } & TMovieModel
 
 @Injectable()
@@ -116,13 +116,13 @@ export class MovieService {
     return votes
   }
 
-  private async cacheMovieContents(id: number, payload: Pick<IGetMovie, 'description' | 'slogan'>) {
+  private async cacheMovieTexts(id: number, payload: Pick<IGetMovie, 'description' | 'slogan'>) {
     if (!payload) {
       return null
     }
 
     return this.db
-      .movieContent
+      .movieText
       .create({
         data: {
           id,
@@ -224,7 +224,7 @@ export class MovieService {
       this.cacheMovieNames(movieData.id, payload.names),
       this.cacheMovieRatings(movieData.id, payload.votes),
       this.cacheMovieYears(movieData.id, payload?.years || null),
-      this.cacheMovieContents(movieData.id, { slogan: payload.slogan, description: payload.description }),
+      this.cacheMovieTexts(movieData.id, { slogan: payload.slogan, description: payload.description }),
     ])
 
     return this.formatCacheMovieData({
@@ -283,9 +283,9 @@ export class MovieService {
       })
   }
 
-  private async getMovieContent(id: number): Promise<TFormatMovie['content']> {
+  private async getMovieText(id: number): Promise<TFormatMovie['content']> {
     return this.db
-      .movieContent
+      .movieText
       .findUnique({
         where: { id }
       })
@@ -316,7 +316,7 @@ export class MovieService {
       this.getMovieGenres(watchData.id),
       this.getMovieRatings(watchData.id),
       this.getMovieYears(watchData.id),
-      this.getMovieContent(watchData.id),
+      this.getMovieText(watchData.id),
     ])
 
     return this.formatCacheMovieData({
