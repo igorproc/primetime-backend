@@ -18,6 +18,8 @@ import {
 import { AuthService } from './auth.service'
 // Validators
 import { AuthInputSchema, LogoutInputSchema, RevokeInputSchema } from '@/auth/dto/validate.dto'
+import { TelegramAuthInputSchema } from '@/auth/auth-ways/telegram/dto/validate.dto'
+import { EmailAuthInputSchema } from '@/auth/auth-ways/email/dto/validate.dto'
 // Swagger Schemas
 import { SuccessAuthSchema, SuccessAuthTokens, SuccessLogoutSchema } from '@/auth/dto/swagger.dto'
 import { DefaultErrorSchema } from '@/global.dto'
@@ -35,6 +37,7 @@ export class AuthController {
   @Post('login')
   @ApiOperation({ description: 'User login by others services' })
   @ApiBody({ type: AuthInputSchema, required: true })
+  @ApiExtraModels(TelegramAuthInputSchema, EmailAuthInputSchema, DefaultErrorSchema)
   @ApiExtraModels(DefaultErrorSchema)
   @ApiOkResponse({ type: SuccessAuthSchema })
   @ApiResponse({
@@ -51,7 +54,7 @@ export class AuthController {
   })
   async login(
     @Body() payload: AuthInputSchema
-  ) {
+  ): Promise<SuccessAuthSchema> {
     return await this.authService.auth(payload.clientId, payload.type, payload.payload)
   }
 

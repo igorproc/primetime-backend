@@ -27,6 +27,15 @@ model application {
   @@map("applications")
 }
 
+model siteSettings {
+  id     Int     @id @default(autoincrement()) @map("id")
+  code   String  @unique @map("code") @data.VarChar(128)
+  status Boolean @default(false) @map("status")
+
+  @@index([code])
+  @@map("site_settings")
+}
+
 // Device
 
 model device {
@@ -39,21 +48,23 @@ model device {
   updatedAt DateTime         @default(now()) @updatedAt @map("updated_at")
 
   // Relations
-  user  user?   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user  user?   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: SetNull)
   token token[]
 
-  @@index([userId])
   @@map("devices")
 }
 
 // Users
 
 model user {
-  id          Int        @id @map("id")
+  id          Int        @id @default(autoincrement()) @map("id")
   role        user_roles @default(USER_DEFAULT) @map("role")
-  firstName   String     @map("first_name") @data.VarChar(64)
-  username    String     @unique() @default(uuid()) @map("login") @data.VarChar(64)
-  photoUrl    String     @unique() @map("photo_url")
+  telegramId  Int?       @unique @map("telegram_id") @data.UnsignedInt
+  email       String?    @unique @map("email") @data.VarChar(128)
+  password    String?    @map("password") @data.VarChar(512)
+  displayName String?    @map("display_name") @data.VarChar(128)
+  username    String     @unique() @default(uuid()) @map("username") @data.VarChar(64)
+  photoUrl    String?    @unique() @map("photo_url")
   lastVisited DateTime   @default(now()) @map("last_visited")
   createdAt   DateTime   @default(now()) @map("created_at")
   updatedAt   DateTime   @default(now()) @updatedAt @map("updated_at")
@@ -62,7 +73,24 @@ model user {
   device device[]
   token  token[]
 
+  blocking userBlocking?
+
   @@map("users")
+}
+
+model userBlocking {
+  id             Int            @id @default(autoincrement()) @map("id")
+  userId         Int            @unique
+  blockingStatus user_blocking? @map("blocking_status")
+  blockingReason String?        @map("blocking_reason") @data.VarChar(128)
+
+  blockedEnd DateTime @map("blocked_end")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at")
+
+  user user @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("users_blocking")
 }
 
 model token {
@@ -344,6 +372,7 @@ model movieStaff {
 }
 
 // Migration
+
 model avliableMigrationTasks {
   // Fields
   id          Int      @id @default(autoincrement())
@@ -399,6 +428,7 @@ model errorHandler {
 }
 
 // Enums
+
 enum applications_status {
   enabled
   disabled
@@ -416,6 +446,12 @@ enum user_roles {
   QA_VERIFY
   QA_DEFAULT
   NONE
+}
+
+enum user_blocking {
+  temporarily
+  forever
+  deleted
 }
 
 enum device_platforms {

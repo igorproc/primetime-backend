@@ -1,7 +1,7 @@
 import { type IStorageRbac } from 'nestjs-rbac'
 
 export const AvailableRoles: IStorageRbac = {
-  roles: ['admin', 'qa', 'user'],
+  roles: ['admin', 'qa', 'user', 'user_verify'],
   permissions: {
     watch: ['getMovie'],
     device: ['all', 'delete', 'freeze'],
@@ -10,6 +10,7 @@ export const AvailableRoles: IStorageRbac = {
   },
   grants: {
     user: ['watch@getMovie'],
+    user_verify: ['&user'],
     qa: ['&user', 'device@all', 'dataBalancer@get', 'migration'],
     admin: [
       '&user',

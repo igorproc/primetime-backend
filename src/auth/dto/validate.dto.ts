@@ -1,14 +1,28 @@
 // Node Deps
-import { ApiProperty } from '@nestjs/swagger'
-import { IsEnum, IsJWT, IsNumber, IsUUID, ValidateNested } from 'class-validator'
+import { ApiProperty, getSchemaPath } from '@nestjs/swagger'
+import {
+  IsEnum,
+  IsJWT,
+  IsNumber,
+  IsUUID,
+  ValidateNested,
+} from 'class-validator'
 import { Type } from 'class-transformer'
 // Other Validators
-import { TelegramAuthInput, TelegramAuthInputSchema } from '@/auth/telegram/dto/validate.dto'
+import { TelegramAuthInput, TelegramAuthInputSchema } from '@/auth/auth-ways/telegram/dto/validate.dto'
+import { EmailAuthInputSchema } from '@/auth/auth-ways/email/dto/validate.dto'
+import { MatchTypeWithData } from '@decorators/validators'
 // Types & Interfaces
 import { EAuthWays } from '@/auth/auth.types'
 
 enum EInvertedAuthWays {
   'TG' = 'telegram',
+  'EMAIL' = 'email',
+}
+
+const authTypeMap = {
+  [EInvertedAuthWays.TG]: TelegramAuthInputSchema,
+  [EInvertedAuthWays.EMAIL]: EmailAuthInputSchema,
 }
 
 export class AuthInputSchema {
@@ -16,7 +30,7 @@ export class AuthInputSchema {
     name: 'type',
     type: String,
     enum: EInvertedAuthWays,
-    required: true,
+    required: true
   })
   @IsEnum(EInvertedAuthWays)
   type: keyof typeof EAuthWays
@@ -25,7 +39,7 @@ export class AuthInputSchema {
     name: 'clientId',
     type: String,
     required: true,
-    example: 'f97eeecf-b553-4cad-a1af-9eb522965893',
+    example: 'f97eeecf-b553-4cad-a1af-9eb522965893'
   })
   @IsUUID()
   clientId: string
@@ -33,10 +47,22 @@ export class AuthInputSchema {
   @ApiProperty({
     name: 'payload',
     required: true,
-    type: TelegramAuthInputSchema,
+    oneOf: [
+      { $ref: getSchemaPath(TelegramAuthInputSchema) },
+      { $ref: getSchemaPath(EmailAuthInputSchema) }
+    ]
   })
   @ValidateNested()
-  @Type(() => TelegramAuthInputSchema)
+  @Type(() => Object, {
+    discriminator: {
+      property: 'type',
+      subTypes: [
+        { value: TelegramAuthInputSchema, name: EInvertedAuthWays.TG },
+        { value: EmailAuthInputSchema, name: EInvertedAuthWays.EMAIL }
+      ]
+    }
+  })
+  @MatchTypeWithData(authTypeMap)
   payload: TelegramAuthInput
 }
 
@@ -45,7 +71,7 @@ export class AuthInputTypeSchema {
     name: 'type',
     type: String,
     enum: EInvertedAuthWays,
-    required: true,
+    required: true
   })
   @IsEnum(EInvertedAuthWays)
   type: keyof typeof EAuthWays
@@ -55,7 +81,7 @@ export class AuthInputTypeSchema {
     type: Number,
     required: true,
     minimum: 1,
-    maximum: 10**10,
+    maximum: 10 ** 10
   })
   @IsNumber({ maxDecimalPlaces: 10 })
   id: number
@@ -69,7 +95,7 @@ export class RevokeInputSchema {
     type: String,
     minimum: 128,
     maximum: 1024,
-    required: true,
+    required: true
   })
   @IsJWT()
   token: string
@@ -83,7 +109,7 @@ export class LogoutInputSchema {
     type: String,
     minimum: 128,
     maximum: 1024,
-    required: true,
+    required: true
   })
   @IsJWT()
   token: string

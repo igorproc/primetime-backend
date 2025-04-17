@@ -111,9 +111,9 @@ export class MigrationsService {
 
   public async startOldMoviesMigration(payload: Omit<TMigrationTaskPayload, 'externalId'>) {
     const totalRecords = await this.getRecordsCount('movie')
-    const totalIterationTimes = Math.ceil(totalRecords / this.STEP_QUERY_OFFSET)
+    const totalIterationTimes =  Math.ceil(totalRecords / this.STEP_QUERY_OFFSET)
 
-    for (let index = 0; index <= totalIterationTimes; index += 1) {
+    for (let index = 0; index < totalIterationTimes; index += 1) {
       const currentIndex = index * this.STEP_QUERY_OFFSET
       const oldIds = await this.getMoviesIds(currentIndex, currentIndex + this.STEP_QUERY_OFFSET)
 

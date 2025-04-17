@@ -1,5 +1,34 @@
+// Node Deps
+import { getCurrentDate } from '@utils/time'
 import { ApiProperty } from '@nestjs/swagger'
-import { user_roles as EUserRoles } from '@prisma/client'
+// Types
+import { user_roles as EUserRoles, user_blocking as EUserBlocking } from '@prisma/client'
+
+export class SuccessAuthBlockingStatus {
+  @ApiProperty({
+    name: 'blockingStatus',
+    type: String,
+    enum: EUserBlocking,
+    example: EUserBlocking.temporarily,
+    required: true,
+  })
+  blockingStatus: string
+
+  @ApiProperty({
+    name: 'blockingReason',
+    type: String,
+    example: 'DMCA',
+    required: true,
+  })
+  blockingReason: string
+
+  @ApiProperty({
+    name: 'blockedEnd',
+    type: Date,
+    example: getCurrentDate().getTime(),
+  })
+  blockedEnd: Date
+}
 
 export class SuccessAuthUser {
   @ApiProperty({
@@ -15,16 +44,17 @@ export class SuccessAuthUser {
     name: 'role',
     type: String,
     enum: EUserRoles,
+    example: EUserRoles.USER_VERIFY,
     required: true,
   })
   role: EUserRoles
 
   @ApiProperty({
-    name: 'firstName',
+    name: 'displayName',
     type: String,
     required: true,
   })
-  firstName: string
+  displayName: string
 
   @ApiProperty({
     name: 'username',
@@ -39,13 +69,6 @@ export class SuccessAuthUser {
     required: true,
   })
   photoUrl: string
-
-  @ApiProperty({
-    name: 'lastVisited',
-    type: Date,
-    required: true,
-  })
-  lastVisited: Date
 }
 
 export class SuccessAuthTokens {
@@ -78,6 +101,13 @@ export class SuccessAuthSchema {
     required: true,
   })
   tokens: SuccessAuthTokens
+
+  @ApiProperty({
+    name: 'blocking',
+    type: SuccessAuthBlockingStatus,
+    nullable: true,
+  })
+  blocking: SuccessAuthBlockingStatus
 }
 
 export class SuccessLogoutSchema {

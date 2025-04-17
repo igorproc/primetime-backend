@@ -4,8 +4,10 @@ import { Module } from '@nestjs/common'
 // Other Modules
 import { DbModule } from '@/db/db.module'
 import { JwtModule } from '@nestjs/jwt'
-// Child Modules
-import { TelegramModule } from '@/auth/telegram/telegram.module'
+// Child Services
+import { TelegramAuthService } from '@/auth/auth-ways/telegram/telegramAuth.service'
+import { EmailAuthService } from '@/auth/auth-ways/email/email.service'
+import { AuthProviderService } from '@/auth/providers/auth.provider'
 // Current Module Deps
 import { AuthService } from './auth.service'
 import { AuthController } from './auth.controller'
@@ -18,10 +20,15 @@ import { AuthGuard } from '@/auth/guards/auth.guard'
       secret: env.CLIENT_SECRET,
       signOptions: {},
     }),
-    TelegramModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, AuthGuard],
+  providers: [
+    AuthService,
+    TelegramAuthService,
+    EmailAuthService,
+    AuthProviderService,
+    AuthGuard,
+  ],
   exports: [AuthService, AuthGuard],
 })
 export class AuthModule {}
