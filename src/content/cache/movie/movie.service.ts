@@ -5,7 +5,7 @@ import { DbService } from '@/db/db.service'
 import { CountryService } from '@/movie/country/country.service'
 import { GenresService } from '@/movie/genres/genres.service'
 // Utils
-import { translateRuSentence } from '@utils/translate'
+import { generateSlug } from '@utils/generate'
 // Swagger Schemas
 import { SuccessGetMovie } from '@/content/balancers/dto/swagger.dto'
 // Types & Interfaces
@@ -49,24 +49,6 @@ export class MovieService {
       [EMovieVotes.critics]: EMovieVoteCodes.CRITICS,
       [EMovieVotes.ruCritics]: EMovieVoteCodes.RU_CRITICS,
     }
-  }
-
-  // Utils
-  private generateSlug(kinopoiskId: number, names: IGetMovie['names']) {
-    let name = names.find(item => item.language === 'EN')?.name
-    if (!name) {
-      const ruName = names.find(item => item.language === 'RU')?.name
-
-      name = translateRuSentence(ruName || 'пока нету ничего')
-    }
-    name = name.toLowerCase()
-
-    const slicedId = kinopoiskId.toString().slice(0, 4)
-    const formatedName = name
-      .replaceAll(' ', '-')
-      .replaceAll(this.NAME_REGEXP, '-')
-
-    return `${slicedId}-${formatedName}`
   }
 
   // Cache Actions
@@ -219,7 +201,7 @@ export class MovieService {
       .create({
         data: {
           type: payload.type,
-          slug: this.generateSlug(payload.kinopoiskId, payload.names),
+          slug: generateSlug(payload.kinopoiskId, payload.names),
           duration: payload.duration,
           kinopoiskId: payload.kinopoiskId,
           imdbId: payload.imdbId,

@@ -20,8 +20,8 @@ export function cryptStringToSha256(message: string): string {
     .digest('hex')
 }
 
-export function encryptWithoutSalt(data: string | Buffer): string {
-  return hashSync(data, 10)
+export function encryptWithSalt(saltOrRounds: string | number, data: string | Buffer): string {
+  return hashSync(data, saltOrRounds)
 }
 
 export function getJWTPayload<T>(token: string): T & JwtPayload {
@@ -33,4 +33,11 @@ export function getJWTPayload<T>(token: string): T & JwtPayload {
   }
 
   return data
+}
+
+export function generateHash(startIndex = 2, sliceMax = 4) {
+  return Math.random()
+    .toString(32)
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .slice(startIndex, startIndex + sliceMax)
 }

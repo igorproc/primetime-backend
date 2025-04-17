@@ -1,7 +1,7 @@
 import { IsEnum } from 'class-validator'
 import { ApiProperty } from '@nestjs/swagger'
 
-enum EAvailableMigrations {
+export enum EAvailableMigrations {
   MOVIE = 'MOVIE',
 }
 
