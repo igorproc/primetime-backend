@@ -9,7 +9,7 @@ export class TelegramAuthInputSchema {
 
   @ApiProperty({ type: String, required: true, minimum: 2 })
   @IsString()
-  displayName: string
+  firstName: string
 
   @ApiProperty({ type: String, required: true, minimum: 2 })
   @IsString()

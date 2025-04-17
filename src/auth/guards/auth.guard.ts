@@ -89,7 +89,7 @@ export class AuthGuard implements CanActivate {
     context
       .switchToHttp()
       .getRequest()
-      .user = { role: this.getRoleFromMap(tokenPayload.role) }
+      .user = { ...tokenData, role: this.getRoleFromMap(tokenPayload.role) }
     return true
   }
 }

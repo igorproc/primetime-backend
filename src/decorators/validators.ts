@@ -1,4 +1,20 @@
-import { registerDecorator, ValidationOptions, ValidationArguments } from 'class-validator'
+import {
+  MatchTypeWithDataConstraint
+} from '@/validator/global.validators'
+
+import {
+  registerDecorator,
+  ValidationOptions,
+  ValidationArguments
+} from 'class-validator'
+
+type TProviderMap<
+  T extends Record<string, string>,
+  U extends Record<T[keyof T], any>
+> = {
+  [key in T[keyof T]]: U[key]
+}
+
 
 export function IsActivationKey(validationOptions?: ValidationOptions) {
   return function(object: object, propertyName: string) {
@@ -17,6 +33,21 @@ export function IsActivationKey(validationOptions?: ValidationOptions) {
           return `${args.property} Invalid activation key format`
         }
       }
+    })
+  }
+}
+
+export function MatchTypeWithData<T extends Record<string, string>, U extends Record<T[keyof T], any>>(
+  typeMap: TProviderMap<T, U>,
+  validationOptions?: ValidationOptions
+) {
+  return function (object: object, propertyName: string) {
+    registerDecorator({
+      target: object.constructor,
+      propertyName: propertyName,
+      options: validationOptions,
+      constraints: [typeMap],
+      validator: MatchTypeWithDataConstraint,
     })
   }
 }

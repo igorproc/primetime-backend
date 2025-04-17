@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "darwin", "debian-openssl-1.1.x"]
 }
 
@@ -32,6 +32,7 @@ model siteSettings {
   code   String  @unique @map("code") @data.VarChar(128)
   status Boolean @default(false) @map("status")
 
+  @@index([code])
   @@map("site_settings")
 }
 
@@ -58,11 +59,12 @@ model device {
 model user {
   id          Int        @id @default(autoincrement()) @map("id")
   role        user_roles @default(USER_DEFAULT) @map("role")
-  telegramId  Int?       @map("telegram_id") @data.UnsignedInt
-  email       String?    @map("email") @data.VarChar(128)
+  telegramId  Int?       @unique @map("telegram_id") @data.UnsignedInt
+  email       String?    @unique @map("email") @data.VarChar(128)
+  password    String?    @map("password") @data.VarChar(512)
   displayName String?    @map("display_name") @data.VarChar(128)
-  username    String     @unique() @default(uuid()) @map("login") @data.VarChar(64)
-  photoUrl    String     @unique() @map("photo_url")
+  username    String     @unique() @default(uuid()) @map("username") @data.VarChar(64)
+  photoUrl    String?    @unique() @map("photo_url")
   lastVisited DateTime   @default(now()) @map("last_visited")
   createdAt   DateTime   @default(now()) @map("created_at")
   updatedAt   DateTime   @default(now()) @updatedAt @map("updated_at")
@@ -72,7 +74,7 @@ model user {
   token        token[]
   watchHistory watchHistory[]
 
-  userBLocking userBlocking?
+  blocking userBlocking?
 
   @@map("users")
 }
@@ -322,6 +324,7 @@ model watchHistory {
 }
 
 // Migration
+
 model avliableMigrationTasks {
   // Fields
   id          Int      @id @default(autoincrement())
@@ -377,6 +380,7 @@ model errorHandler {
 }
 
 // Enums
+
 enum applications_status {
   enabled
   disabled

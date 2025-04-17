@@ -1,6 +1,6 @@
 // Node Deps
 import { Test, TestingModule } from '@nestjs/testing'
-import { TelegramService } from '../telegram.service'
+import { TelegramAuthService } from '../telegramAuthService'
 import { HttpException } from '@nestjs/common'
 // Service Deps
 import { TelegramErrors } from '@/auth/telegram/telegram.errors'
@@ -18,15 +18,15 @@ type JSONData = {
 
 describe('[Telegram] Main Service', () => {
   const data = getDataFromJson<JSONData>('telegram.json')
-  let service: TelegramService
+  let service: TelegramAuthService
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [Env(), DbModule],
-      providers: [TelegramService]
+      providers: [TelegramAuthService]
     }).compile()
 
-    service = module.get<TelegramService>(TelegramService)
+    service = module.get<TelegramAuthService>(TelegramAuthService)
   })
 
   it('should be defined', () => {

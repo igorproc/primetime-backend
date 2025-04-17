@@ -74,6 +74,7 @@ export class BalancersService {
           where: { selected: true },
           data: { selected: false }
         })
+
       const firstAvailableService = await this.db
         .dataBalancer
         .findFirst({
@@ -87,6 +88,7 @@ export class BalancersService {
           where: { id: firstAvailableService.id },
           data: { selected: true },
         })
+
       return firstAvailableService
     } catch {
       throw new HttpException(

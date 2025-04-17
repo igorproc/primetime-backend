@@ -4,21 +4,20 @@ import { env } from 'process'
 // Other Service Deps
 import { DbService } from '@/db/db.service'
 // Errors
-import { TelegramErrors } from '@/auth/telegram/telegram.errors'
+import { TelegramErrors } from '@/auth/auth-ways/telegram/telegram.errors'
 // Utils
 import { cryptStringToSha256, cryptStringToSha256ByKey } from '@utils/crypt'
 import { getCurrentDate, getCurrentTimestamp } from '@utils/time'
 // Constants
 import { MAX_PAYLOAD_LIFE } from '@/global.const'
 // Types & Interfaces
-import { type user, user_roles } from '@prisma/client'
+import { user_roles } from '@prisma/client'
 import type { IAuthServiceProvider } from '@/auth/auth.types'
-import type { TelegramAuthInput } from '@/auth/telegram/dto/validate.dto'
-import { ETelegramHmacTokenFields } from '@/auth/telegram/telegram.types'
+import type { TelegramAuthInput } from '@/auth/auth-ways/telegram/dto/validate.dto'
+import { ETelegramHmacTokenFields, TSuccessTelegramAuthCheck } from '@/auth/auth-ways/telegram/telegram.types'
 
-type TTelegramDataCreate = Omit<user, 'createdAt' | 'updatedAt'>
 @Injectable()
-export class TelegramService implements IAuthServiceProvider {
+export class TelegramAuthService implements IAuthServiceProvider {
   constructor(
     private readonly db: DbService
   ) {}
@@ -37,7 +36,7 @@ export class TelegramService implements IAuthServiceProvider {
     return dataHmac === hash
   }
 
-  public async authUser(data: TelegramAuthInput): Promise<TTelegramDataCreate> {
+  public async checkAuth(data: TelegramAuthInput): Promise<TSuccessTelegramAuthCheck> {
     const dataIsValid = this.validateTelegramData(data)
     const currentTimestamp = getCurrentTimestamp()
     const dataIsExpired = currentTimestamp - data.authDate > MAX_PAYLOAD_LIFE
@@ -48,6 +47,7 @@ export class TelegramService implements IAuthServiceProvider {
         HttpStatus.NOT_ACCEPTABLE,
       )
     }
+
     if (dataIsExpired) {
       throw new HttpException(
         TelegramErrors.DATA_EXPIRED,
@@ -56,7 +56,7 @@ export class TelegramService implements IAuthServiceProvider {
     }
 
     return {
-      id: data.id,
+      telegramId: data.id,
       displayName: data.firstName,
       username: data.username,
       photoUrl: data.photoUrl,
