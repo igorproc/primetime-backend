@@ -20,7 +20,7 @@ import { getPageDataSize } from '@utils/generate'
 // Types & Interfaces
 import { balancer_code as EBalancerCodes } from '@prisma/client'
 import { StaffService } from '@/content/cache/staff/staff.service'
-import { difference } from 'es-toolkit/compat'
+import { IGetStaffInfo } from '@/content/balancers/balancer.types'
 
 type TBalancer = (KpPayService | KpService)
 type TAvailableBalancers = { [key in EBalancerCodes]: TBalancer }
@@ -246,7 +246,7 @@ export class BalancersService {
       const token = await this.getToken(code)
 
       const [
-        cachedStaffIds,
+        cachedStaff,
         apiStaffIds,
       ] = await Promise.all([
         this.staff.getListByKinopoiskId(kinopoiskId),
@@ -257,7 +257,55 @@ export class BalancersService {
         return null
       }
 
-      return difference(apiStaffIds.staffKinopoiskId, cachedStaffIds)
+      const differenceIds = apiStaffIds
+        .staffKinopoiskId
+        .filter(
+          id => !cachedStaff?.staffIds?.includes(id),
+        )
+
+      const list: IGetStaffInfo[] = []
+      for (const value of differenceIds) {
+        const person = await this.getters.getStaffInfoByPersonId(value)
+        list.push(person)
+      }
+
+      return list
+    },
+
+    getStaffInfoByPersonId: async (staffKinopoiskId: number) => {
+      let cacheData = await this.staff.findByStaffKinopoiskId(staffKinopoiskId)
+      if (cacheData) {
+        return cacheData
+      }
+
+      const { code, service } = await this.getCurrentBalancer()
+      const token = await this.getToken(code)
+
+      const data = await service.getStaffInfo(token, staffKinopoiskId)
+      if ('status' in data && data?.status === 'error') {
+        if (this.getters.attempts >= 3) {
+          throw new HttpException(ContentErrors.BALANCER_DOWN, HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+
+        this.getters.attempts += 1
+        return await this.getters.getStaffInfoByPersonId(staffKinopoiskId)
+      }
+
+      if ('staffKinopoiskId' in data) {
+        cacheData = await this.staff.cacheStaff(data)
+      }
+
+      // TODO
+      // закешировать фильмы которых у нас нет в data.linkMovie
+
+      // забрать от созданных фильмов movie_content_id и от уже созданных,
+      // которые есть в data.linkMovie
+
+      // с помощью cacheData.id (staff_info_id) и movie_content_id создать movie_staff, которых еще нет
+
+      // this.movie.cacheMovie()
+
+      return cacheData
     }
   }
 }

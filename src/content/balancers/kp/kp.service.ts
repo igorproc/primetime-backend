@@ -14,7 +14,7 @@ import {
   IGetStaffInfo
 } from '@/content/balancers/balancer.types'
 import { type Film, PersonResponse, StaffResponse } from '@@/.types/content-balancer/kp'
-import moment from 'moment'
+import * as moment from 'moment'
 import { staff_profession_key } from '@prisma/client'
 
 @Injectable()
